@@ -1,0 +1,82 @@
+@page "/admin/users"
+@using OnboardingBot.Shared.Entities
+@using Refit
+@using OnboardingBot.Server.Shared.APIs
+
+<PageTitle>Сотрудники</PageTitle>
+
+<MudGrid>
+    <MudItem>
+        <MudFab DisableElevation="true"
+                StartIcon="@Icons.Material.Filled.ArrowBack"
+                Text="Домой" Href="/admin" Label="Домой"/>
+    </MudItem>
+    <MudItem>
+        <MudText Typo="Typo.h3" GutterBottom="true">Сотрудники</MudText>
+    </MudItem>
+    <MudItem>
+        <MudFab StartIcon="@Icons.Material.Filled.Add"
+                Size="Size.Small"
+                Color="Color.Success"
+                Label="Добавить"
+                Text="Добавить"
+                DisableElevation="true"
+                Href="/admin/users/create"/>
+    </MudItem>
+</MudGrid>
+
+<MudPaper>
+    <MudTable Items="@Models">
+        <HeaderContent>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<UserEntity, object>(x => x.LastName)">Фамилия</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<UserEntity, object>(x => x.FirstName)">Имя</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<UserEntity, object>(x => x.MiddleName)">Отчество</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                Действия
+            </MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>
+                @context.LastName
+            </MudTd>
+            <MudTd>
+                @context.FirstName
+            </MudTd>
+            <MudTd>
+                @context.MiddleName
+            </MudTd>
+            <MudTd>
+                <MudButton Size="Size.Small" Color="Color.Success" Href="@($"/admin/users/{context.ID}/info")">Инфо</MudButton>
+                <MudButton Size="Size.Small" Color="Color.Warning" Href="@($"/admin/users/{context.ID}/edit")">Изменить</MudButton>
+                @* <MudButton Size="Size.Small" Color="Color.Error" OnClick="(() => OnDeleteModel(context))">Удалить</MudButton> *@
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code
+{
+    private List<UserEntity> Models { get; set; } = new();
+
+    [Inject]
+    private IUserController ModelController { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Models = await ModelController.GetAll();
+        }
+        catch (ApiException e)
+        {
+            Console.WriteLine(e);
+            // throw;
+        }
+    }
+}
