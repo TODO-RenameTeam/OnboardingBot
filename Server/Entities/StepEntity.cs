@@ -39,4 +39,6 @@ public class StepEntity
     /// </summary>
     [ForeignKey(nameof(PositionID))]
     public PositionEntity? Position { get; set; }
+    
+    public HashSet<QuizEntity>? Quizes { get; set; } = new();
 }

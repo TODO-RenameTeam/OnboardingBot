@@ -22,4 +22,7 @@ public class TextCommandEditModel
     public Guid? PositionID { get; set; }
 
     public HashSet<ButtonViewModel>? Buttons { get; set; } = new();
+    
+    public HashSet<QuizViewModel>? Quizes { get; set; } = new();
+
 }

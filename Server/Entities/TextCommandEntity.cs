@@ -51,4 +51,6 @@ public class TextCommandEntity
     /// Сущность кнопок.
     /// </summary>
     public HashSet<ButtonEntity>? Buttons { get; set; } = new();
+
+    public HashSet<QuizEntity>? Quizes { get; set; } = new();
 }

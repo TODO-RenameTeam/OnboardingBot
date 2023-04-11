@@ -6,4 +6,7 @@ public class QuizViewModel
     public string Text { get; set; }
     public List<string> Options { get; set; } = new();
     public int RightOptionID { get; set; }
+    
+    public HashSet<TextCommandViewModel>? TextCommands { get; set; } = new();
+    public HashSet<StepViewModel>? Steps { get; set; } = new();
 }

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using OnboardingBot.Shared.ViewModels;
 
 namespace OnboardingBot.Shared.EditModels;
 
@@ -16,4 +17,6 @@ public class StepEditModel
     public int QuizesCount { get; set; } = 0;
     
     public Guid? PositionID { get; set; }
+    
+    public HashSet<QuizViewModel>? Quizes { get; set; } = new();
 }

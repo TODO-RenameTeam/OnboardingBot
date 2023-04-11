@@ -11,4 +11,7 @@ public class QuizEntity
     public string Text { get; set; }
     public List<string> Options { get; set; } = new();
     public int RightOptionID { get; set; }
+
+    public HashSet<TextCommandEntity>? TextCommands { get; set; } = new();
+    public HashSet<StepEntity>? Steps { get; set; } = new();
 }

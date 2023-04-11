@@ -9,4 +9,7 @@ public class StepViewModel
     public HashSet<string>? Urls { get; set; } = new();
     public int QuizesCount { get; set; } = 0;
     public Guid? PositionID { get; set; }
+    
+    
+    public HashSet<QuizViewModel>? Quizes { get; set; } = new();
 }

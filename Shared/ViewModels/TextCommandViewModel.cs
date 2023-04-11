@@ -9,10 +9,12 @@ public class TextCommandViewModel
 
     public HashSet<string>? Images { get; set; } = new();
     public HashSet<string>? Urls { get; set; } = new();
-    
+
     public int QuizesCount { get; set; } = 0;
 
     public Guid? PositionID { get; set; }
 
     public HashSet<ButtonViewModel>? Buttons { get; set; } = new();
+
+    public HashSet<QuizViewModel>? Quizes { get; set; } = new();
 }
