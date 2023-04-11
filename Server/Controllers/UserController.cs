@@ -22,7 +22,7 @@ public class UserController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<UserViewModel>>> GetAll()
     {
-        var res = Context.Tests.ToList();
+        var res = Context.Users.ToList();
 
         return res.Select(x => Mapper.Map<UserViewModel>(x)).ToList();
     }
