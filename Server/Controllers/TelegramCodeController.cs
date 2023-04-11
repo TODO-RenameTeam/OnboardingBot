@@ -59,6 +59,12 @@ public class TelegramCodeController : ControllerBase
     [HttpPost("generate")]
     public async Task<ActionResult<TelegramCodeViewModel>> Generate(Guid userId)
     {
+        var user = await Context.Users.FindAsync(userId);
+        if (user == null)
+        {
+            return NotFound();
+        }
+        
         var res = Context.TelegramCodes.FirstOrDefault(x => x.UserID == userId);
         if (res == null)
         {
@@ -100,6 +106,7 @@ public class TelegramCodeController : ControllerBase
 
         return Ok();
     }
+    
 
     [HttpDelete]
     public async Task<IActionResult> Delete(Guid id)

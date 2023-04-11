@@ -37,6 +37,8 @@ public class Mappings : Profile
         CreateMap<StepViewModel, StepEntity>().ReverseMap();
         CreateMap<StepEditModel, StepEntity>().ReverseMap();
 
+        CreateMap<TelegramCodeViewModel, TelegramCodeEntity>().ReverseMap();
+
         CreateMap<TestViewModel, TestEditModel>().ReverseMap();
         CreateMap<TestViewModel, TestEntity>().ReverseMap();
         CreateMap<TestEditModel, TestEntity>().ReverseMap();

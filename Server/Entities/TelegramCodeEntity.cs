@@ -24,7 +24,7 @@ public class TelegramCodeEntity
     /// Сущность пользователя в системе.
     /// </summary>
     [ForeignKey(nameof(UserID))]
-    public UserEntity User { get; set; }
+    public UserEntity? User { get; set; }
 
     /// <summary>
     /// Дата и время создания сущности.
