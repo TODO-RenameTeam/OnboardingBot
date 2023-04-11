@@ -1,11 +1,14 @@
-@page "/admin/textcommands"
+@page "/admin/quizs"
 @using OnboardingBot.Shared.ViewModels
 @using Refit
 @using OnboardingBot.Shared.APIs
+@using OnboardingBot.Shared.Extensions
+@using System.ComponentModel.DataAnnotations
+@using OnboardingBot.Shared.Models
 
 @layout AdminLayout
 
-<PageTitle>Текстовые комманды</PageTitle>
+<PageTitle>Квизы</PageTitle>
 
 <MudGrid>
     <MudItem>
@@ -15,7 +18,7 @@
                 Text="Домой" Href="/admin" Label="Домой"/>
     </MudItem>
     <MudItem>
-        <MudText Typo="Typo.h3" GutterBottom="true">Текстовые комманды</MudText>
+        <MudText Typo="Typo.h3" GutterBottom="true">Квизы</MudText>
     </MudItem>
     <MudItem>
         <MudFab StartIcon="@Icons.Material.Filled.Add"
@@ -24,7 +27,7 @@
                 Label="Добавить"
                 Text="Добавить"
                 DisableElevation="true"
-                Href="/admin/textcommands/create"/>
+                Href="/admin/quizs/create"/>
     </MudItem>
 </MudGrid>
 
@@ -32,13 +35,7 @@
     <MudTable Items="@Models">
         <HeaderContent>
             <MudTh>
-                <MudTableSortLabel SortBy="new Func<TextCommandViewModel, object>(x => x.Name)">Название</MudTableSortLabel>
-            </MudTh>
-            <MudTh>
-                <MudTableSortLabel SortBy="new Func<TextCommandViewModel, object>(x => x.Template)">Шаблон</MudTableSortLabel>
-            </MudTh>
-            <MudTh>
-                <MudTableSortLabel SortBy="new Func<TextCommandViewModel, object>(x => x.QuizesCount)">Кол-во квизов</MudTableSortLabel>
+                <MudTableSortLabel SortBy="new Func<QuizViewModel, object>(x => x.Name)">Название</MudTableSortLabel>
             </MudTh>
             <MudTh>
                 Действия
@@ -49,13 +46,7 @@
                 @context.Name
             </MudTd>
             <MudTd>
-                @context.Template
-            </MudTd>
-            <MudTd>
-                @context.QuizesCount
-            </MudTd>
-            <MudTd>
-                <MudButton Size="Size.Small" Color="Color.Warning" Href="@($"/admin/textcommands/{context.ID}/edit")">Изменить</MudButton>
+                <MudButton Size="Size.Small" Color="Color.Warning" Href="@($"/admin/quizs/{context.ID}/edit")">Изменить</MudButton>
                 <MudButton Size="Size.Small" Color="Color.Error" OnClick="(() => OnDeleteModel(context))">Удалить</MudButton>
             </MudTd>
         </RowTemplate>
@@ -64,14 +55,14 @@
 
 @code
 {
-    private List<TextCommandViewModel> Models { get; set; } = new();
+    private List<QuizViewModel> Models { get; set; } = new();
 
     [Inject]
-    private ITextCommandController ModelController { get; set; }
-    
+    private IQuizController ModelController { get; set; }
+
     [Inject]
     private IDialogService DialogService { get; set; }
-    
+
     [Inject]
     private ISnackbar Snackbar { get; set; }
 
@@ -84,11 +75,12 @@
         catch (ApiException e)
         {
             Console.WriteLine(e);
-            // throw;
+    // throw;
         }
     }
     
-    private async Task OnDeleteModel(TextCommandViewModel model)
+    
+    private async Task OnDeleteModel(QuizViewModel model)
     {
         var result = await DialogService.ShowMessageBox("Подтверждение",
             $"Вы точно хотите удалить {model.Name}?", "Да", "Нет");
@@ -102,7 +94,7 @@
         {
             await ModelController.Delete(model.ID);
             Models = await ModelController.GetAll();
-            Snackbar.Add("Текстовая команда успешно удалена!", Severity.Success);
+            Snackbar.Add("Квиз успешно удалён!", Severity.Success);
         }
         catch (ValidationApiException validationException)
         {

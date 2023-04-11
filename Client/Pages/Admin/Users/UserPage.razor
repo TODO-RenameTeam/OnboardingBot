@@ -1,0 +1,164 @@
+@page "/admin/users/{ID:guid}/edit"
+@page "/admin/users/create"
+
+@using Refit
+@using AutoMapper
+@using OnboardingBot.Shared.APIs
+@using OnboardingBot.Shared.EditModels
+@using System.ComponentModel.DataAnnotations
+@using OnboardingBot.Shared.Extensions
+@using OnboardingBot.Shared.Models
+@using OnboardingBot.Shared.ViewModels
+@using ButtonType = MudBlazor.ButtonType
+
+@layout AdminLayout
+
+<PageTitle>@PageTitle</PageTitle>
+
+<MudGrid>
+    <MudItem>
+        <MudFab DisableElevation="true"
+                StartIcon="@Icons.Material.Filled.ArrowBack"
+                Text="Назад" Href="/admin/users"/>
+    </MudItem>
+    <MudItem>
+        <MudText Typo="Typo.h3">@PageTitle</MudText>
+    </MudItem>
+    <MudItem xs="12">
+        <EditForm Model="@Model" OnValidSubmit="OnValidSumbit">
+            <DataAnnotationsValidator/>
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField Label="Фамилия" @bind-Value="Model.LastName" For="() => Model.LastName"/>
+                    <MudTextField Label="Имя" @bind-Value="Model.FirstName" For="() => Model.FirstName"/>
+                    <MudTextField Label="Отчество" @bind-Value="Model.MiddleName" For="() => Model.MiddleName"/>
+                    <MudAutocomplete @bind-Value="@Model.Role"
+                                     Label="Роль"
+                                     SearchFunc="@SearchUserRole"
+                                     ToStringFunc=@(x => x.GetAttribute<DisplayAttribute, UserRole>().Name)>
+
+                    </MudAutocomplete>
+                    <MudAutocomplete @bind-Value="@Model.Position"
+                                     Label="Должность"
+                                     SearchFunc="@SearchPosition"
+                                     ToStringFunc=@(x => x == null ? "" : x.Name)>
+
+                    </MudAutocomplete>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudFab ButtonType="ButtonType.Submit"
+                            Variant="Variant.Filled"
+                            DisableElevation="true"
+                            StartIcon="@Icons.Material.Filled.Save"
+                            Text="Сохранить"
+                            Color="Color.Primary"/>
+                </MudCardActions>
+            </MudCard>
+        </EditForm>
+    </MudItem>
+</MudGrid>
+
+@code
+{
+    [Parameter]
+    public Guid? ID { get; set; }
+
+    public bool IsEdit => ID != null;
+
+    public string PageTitle => IsEdit ? "Изменение сотрудника" : "Создание сотрудника";
+
+    public UserEditModel Model { get; set; } = new();
+
+    [Inject]
+    public IUserController ModelController { get; set; }
+
+    [Inject]
+    public IPositionController PositionController { get; set; }
+
+    public List<PositionViewModel> Positions { get; set; } = new();
+    public PositionViewModel? SelectedPosition { get; set; } = null!;
+
+    [Inject]
+    public IMapper Mapper { get; set; }
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; }
+
+    public List<UserRole> UserRoles { get; set; } = new(Enum.GetValues<UserRole>());
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDates();
+    }
+
+    private async Task<IEnumerable<UserRole>> SearchUserRole(string arg)
+    {
+        if (string.IsNullOrWhiteSpace(arg))
+        {
+            return UserRoles;
+        }
+
+        return UserRoles.Where(x =>
+            x.GetAttribute<DisplayAttribute, UserRole>().Name
+                .Contains(arg, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private async Task<IEnumerable<PositionViewModel>> SearchPosition(string arg)
+    {
+        if (string.IsNullOrWhiteSpace(arg))
+        {
+            return Positions;
+        }
+
+        return Positions.Where(x =>
+            x.Name
+                .Contains(arg, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private async Task LoadDates()
+    {
+        try
+        {
+            Positions = await PositionController.GetAll();
+            if (IsEdit)
+            {
+                Model = Mapper.Map<UserEditModel>(await ModelController.GetByID(ID.GetValueOrDefault()));
+                if (Model.PositionID != null)
+                {
+                    SelectedPosition = Positions.FirstOrDefault(x => x.ID == Model.PositionID);
+                }
+            }
+        }
+        catch (ApiException e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+
+    private async Task OnValidSumbit()
+    {
+        Model.PositionID = SelectedPosition?.ID ?? null;
+
+        try
+        {
+            var result = IsEdit
+                ? await ModelController.Update(ID.GetValueOrDefault(), Model)
+                : await ModelController.Create(Model);
+
+            Model = Mapper.Map<UserEditModel>(result);
+            NavigationManager.NavigateTo($"/admin/users/{result.ID}/edit");
+            Snackbar.Add("Сотрудник успешно сохранён!");
+        }
+        catch (ValidationApiException validationException)
+        {
+            Snackbar.Add(validationException.Content.Detail, Severity.Error);
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(exception.RequestMessage.Content.ToString(), Severity.Error);
+        }
+    }
+}

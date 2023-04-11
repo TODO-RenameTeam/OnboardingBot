@@ -32,7 +32,7 @@ public class RoleOnboardingController : ControllerBase
     public async Task<ActionResult<RoleOnboardingViewModel>> GetByID(Guid id)
     {
         var roleOnboarding = Context.RoleOnboardings.Include(x => x.Position)
-            .Include(x => x.Steps)
+            .Include(x => x.UserSteps)
             .FirstOrDefault(x => x.ID == id);
 
         if (roleOnboarding == null)

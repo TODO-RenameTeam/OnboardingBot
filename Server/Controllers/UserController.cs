@@ -58,6 +58,13 @@ public class UserController : ControllerBase
     {
         var entity = Mapper.Map<UserEntity>(user);
 
+        var position = await Context.Positions.FindAsync(entity.PositionID);
+        if (position != null)
+        {
+            entity.PositionID = position.ID;
+            entity.Position = position;
+        }
+
         entity.TelegramID = null;
         Context.Users.Add(entity);
         await Context.SaveChangesAsync();
@@ -74,6 +81,13 @@ public class UserController : ControllerBase
         Context.Attach(entity);
         Context.Entry(entity).State = EntityState.Modified;
         Context.Entry(entity).Property(x => x.TelegramID).IsModified = false;
+        
+        var position = await Context.Positions.FindAsync(entity.PositionID);
+        if (position != null)
+        {
+            entity.PositionID = position.ID;
+            entity.Position = position;
+        }
 
         await Context.SaveChangesAsync();
 

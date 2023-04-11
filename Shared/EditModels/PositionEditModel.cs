@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using OnboardingBot.Shared.ViewModels;
 
 namespace OnboardingBot.Shared.EditModels;
 
@@ -10,4 +11,7 @@ public class PositionEditModel
     public string? Description { get; set; }
     
     public Guid? MainUserID { get; set; }
+    
+    public UserViewModel? MainUser { get; set; }
+
 }

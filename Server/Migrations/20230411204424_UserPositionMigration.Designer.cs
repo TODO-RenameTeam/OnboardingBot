@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OnboardingBot.Server;
@@ -12,9 +13,11 @@ using OnboardingBot.Server;
 namespace OnboardingBot.Server.Migrations
 {
     [DbContext(typeof(DBContext))]
-    partial class DBContextModelSnapshot : ModelSnapshot
+    [Migration("20230411204424_UserPositionMigration")]
+    partial class UserPositionMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -137,10 +140,6 @@ namespace OnboardingBot.Server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<List<string>>("Options")
                         .IsRequired()
                         .HasColumnType("text[]");
@@ -174,26 +173,6 @@ namespace OnboardingBot.Server.Migrations
                     b.HasIndex("PositionID");
 
                     b.ToTable("RoleOnboardings");
-                });
-
-            modelBuilder.Entity("OnboardingBot.Server.Entities.RoleOnboardingStepEntity", b =>
-                {
-                    b.Property<Guid>("RoleOnboardingID")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("StepID")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("Position")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(1);
-
-                    b.HasKey("RoleOnboardingID", "StepID", "Position");
-
-                    b.HasIndex("StepID");
-
-                    b.ToTable("RoleOnboardingStepEntity");
                 });
 
             modelBuilder.Entity("OnboardingBot.Server.Entities.StepEntity", b =>
@@ -383,12 +362,6 @@ namespace OnboardingBot.Server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<DateTime?>("DateTimeEnd")
-                        .HasColumnType("timestamp without time zone");
-
-                    b.Property<DateTime>("DateTimeStart")
-                        .HasColumnType("timestamp without time zone");
-
                     b.Property<Guid>("RoleOnboardingID")
                         .HasColumnType("uuid");
 
@@ -540,25 +513,6 @@ namespace OnboardingBot.Server.Migrations
                     b.Navigation("Position");
                 });
 
-            modelBuilder.Entity("OnboardingBot.Server.Entities.RoleOnboardingStepEntity", b =>
-                {
-                    b.HasOne("OnboardingBot.Server.Entities.RoleOnboardingEntity", "RoleOnboarding")
-                        .WithMany("StepPositions")
-                        .HasForeignKey("RoleOnboardingID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("OnboardingBot.Server.Entities.StepEntity", "Step")
-                        .WithMany("RoleOnboardingPositions")
-                        .HasForeignKey("StepID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("RoleOnboarding");
-
-                    b.Navigation("Step");
-                });
-
             modelBuilder.Entity("OnboardingBot.Server.Entities.StepEntity", b =>
                 {
                     b.HasOne("OnboardingBot.Server.Entities.PositionEntity", "Position")
@@ -640,7 +594,7 @@ namespace OnboardingBot.Server.Migrations
             modelBuilder.Entity("OnboardingBot.Server.Entities.UserOnboardingEntity", b =>
                 {
                     b.HasOne("OnboardingBot.Server.Entities.RoleOnboardingEntity", "RoleOnboarding")
-                        .WithMany("UserSteps")
+                        .WithMany("Steps")
                         .HasForeignKey("RoleOnboardingID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -731,14 +685,7 @@ namespace OnboardingBot.Server.Migrations
 
             modelBuilder.Entity("OnboardingBot.Server.Entities.RoleOnboardingEntity", b =>
                 {
-                    b.Navigation("StepPositions");
-
-                    b.Navigation("UserSteps");
-                });
-
-            modelBuilder.Entity("OnboardingBot.Server.Entities.StepEntity", b =>
-                {
-                    b.Navigation("RoleOnboardingPositions");
+                    b.Navigation("Steps");
                 });
 
             modelBuilder.Entity("OnboardingBot.Server.Entities.TestEntity", b =>

@@ -30,10 +30,21 @@ public class RefitProvider
         };
 
         var apiUrl = url;
+        services.AddRefitClient<IPositionController>(refitSettings)
+            .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
+        
+        services.AddRefitClient<IQuizController>(refitSettings)
+            .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
+        
+        services.AddRefitClient<IStepController>(refitSettings)
+            .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
+        
+        services.AddRefitClient<ITelegramCodeController>(refitSettings)
+            .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
 
         services.AddRefitClient<ITextCommandController>(refitSettings)
             .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
-        
+
         services.AddRefitClient<IUserController>(refitSettings)
             .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
     }

@@ -21,7 +21,7 @@
     <MudItem>
         <MudText Typo="Typo.h3">@PageTitle</MudText>
     </MudItem>
-    <MudItem xs="12" sm="6">
+    <MudItem xs="12">
         <EditForm Model="@Model" OnValidSubmit="OnValidSumbit">
             <DataAnnotationsValidator/>
             <MudCard>
@@ -52,7 +52,7 @@
         @* Зона кнопок *@
         <MudFab StartIcon="@Icons.Material.Filled.Add"
                 Color="Color.Success"
-                Size="Size.Small" Text="Добавить звонок"
+                Size="Size.Small" Text="Добавить кнопку"
                 Label="Добавить кнопку"
                 DisableElevation="true"
                 OnClick="AddButton"/>

@@ -21,4 +21,8 @@
 		<ProjectReference Include="..\Shared\OnboardingBot.Shared.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <AdditionalFiles Include="Pages\Admin\Positions\PositionsPage.razor" />
+	</ItemGroup>
+
 </Project>

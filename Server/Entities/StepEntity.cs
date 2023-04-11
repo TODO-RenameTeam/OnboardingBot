@@ -3,6 +3,9 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace OnboardingBot.Server.Entities;
 
+/// <summary>
+/// Сущность шага в онбординге.
+/// </summary>
 public class StepEntity
 {
     /// <summary>
@@ -34,6 +37,7 @@ public class StepEntity
     /// </summary>
     public Guid? PositionID { get; set; }
 
+    
     /// <summary>
     /// Сущность должности.
     /// </summary>
@@ -41,4 +45,7 @@ public class StepEntity
     public PositionEntity? Position { get; set; }
     
     public HashSet<QuizEntity>? Quizes { get; set; } = new();
+    
+    public HashSet<RoleOnboardingEntity>? RoleOnboardings { get; set; } = new();
+    public HashSet<RoleOnboardingStepEntity>? RoleOnboardingPositions { get; set; } = new();
 }

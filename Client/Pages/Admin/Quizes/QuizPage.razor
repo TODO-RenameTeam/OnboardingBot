@@ -1,0 +1,41 @@
+@page "/admin/quizs/{ID:guid}/edit"
+@page "/admin/quizs/create"
+
+@using OnboardingBot.Client.Components
+
+@using Refit
+@using AutoMapper
+@using OnboardingBot.Shared.APIs
+@using OnboardingBot.Shared.EditModels
+@using ButtonType = MudBlazor.ButtonType
+
+@layout AdminLayout
+
+<MudGrid>
+    <MudItem>
+        <MudFab DisableElevation="true"
+                StartIcon="@Icons.Material.Filled.ArrowBack"
+                Text="Назад" Href="/admin/positions"/>
+    </MudItem>
+    <MudItem>
+        <MudText Typo="Typo.h3">@PageTitle</MudText>
+    </MudItem>
+    <MudItem xs="12">
+        <QuizEditCard ID="ID" UseNavigations="true"/>
+    </MudItem>
+</MudGrid>
+
+@code
+{
+    [Parameter]
+    public Guid? ID { get; set; }
+
+    public bool IsEdit => ID != null;
+
+    public string PageTitle => IsEdit ? "Изменение квиза" : "Создание квиза";
+
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+}

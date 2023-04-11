@@ -30,5 +30,5 @@ public class PositionEntity
     /// </summary>
     public Guid? MainUserID { get; set; }
 
-    [ForeignKey(nameof(MainUserID))] public UserEntity MainUser { get; set; }
+    [ForeignKey(nameof(MainUserID))] public UserEntity? MainUser { get; set; }
 }
