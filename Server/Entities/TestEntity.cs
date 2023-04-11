@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace OnboardingBot.Shared.Entities;
+namespace OnboardingBot.Server.Entities;
 
 public class TestEntity
 {
@@ -14,6 +14,7 @@ public class TestEntity
     /// <summary>
     /// Название.
     /// </summary>
+    [Required]
     public string Name { get; set; }
     
     /// <summary>
@@ -39,12 +40,7 @@ public class TestEntity
     public HashSet<QuestionEntity> Questions { get; set; } = new();
     
     /// <summary>
-    /// Сущность кнопок, отображаемые перед тестом.
+    /// Сущность кнопок, отображаемые перед и после тестом.
     /// </summary>
-    public HashSet<ButtonEntity>? ButtonsBefore { get; set; } = new();
-    
-    /// <summary>
-    /// Сущность кнопок, отображаемые после теста.
-    /// </summary>
-    public HashSet<ButtonEntity>? ButtonsAter { get; set; } = new();
+    public HashSet<ButtonEntity>? Buttons { get; set; } = new();
 }

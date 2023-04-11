@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using OnboardingBot.Server.Shared;
-using OnboardingBot.Server.Shared.APIs;
+using OnboardingBot.Shared.APIs;
+using OnboardingBot.Shared;
 using Refit;
 
 namespace OnboardingBot.Client.Providers;

@@ -1,7 +1,9 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OnboardingBot.Server.Services;
-using OnboardingBot.Shared.Entities;
+using OnboardingBot.Server.Entities;
+using OnboardingBot.Shared.EditModels;
+using OnboardingBot.Shared.ViewModels;
 
 namespace OnboardingBot.Server.Controllers;
 
@@ -10,6 +12,7 @@ namespace OnboardingBot.Server.Controllers;
 public class UserController : ControllerBase
 {
     private DBContext Context;
+    private IMapper Mapper;
 
     public UserController(DBContext context)
     {
@@ -17,13 +20,15 @@ public class UserController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<UserEntity>>> GetAll()
+    public async Task<ActionResult<List<UserViewModel>>> GetAll()
     {
-        return Context.Users.ToList();
+        var res = Context.Tests.ToList();
+
+        return res.Select(x => Mapper.Map<UserViewModel>(x)).ToList();
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<UserEntity>> GetByID(Guid id)
+    public async Task<ActionResult<UserViewModel>> GetByID(Guid id)
     {
         var user = await Context.Users.FindAsync(id);
         if (user == null)
@@ -31,31 +36,34 @@ public class UserController : ControllerBase
             return NotFound();
         }
 
-        return user;
+        return Mapper.Map<UserViewModel>(user);
     }
 
     [HttpPost]
-    public async Task<ActionResult<UserEntity>> Create(UserEntity user)
+    public async Task<ActionResult<UserViewModel>> Create(UserEditModel user)
     {
-        user.TelegramID = null;
-        Context.Users.Add(user);
+        var entity = Mapper.Map<UserEntity>(user);
+
+        entity.TelegramID = null;
+        Context.Users.Add(entity);
         await Context.SaveChangesAsync();
 
-        return await GetByID(user.ID);
+        return await GetByID(entity.ID);
     }
 
     [HttpPut]
-    public async Task<ActionResult<UserEntity>> Update(Guid id, UserEntity user)
+    public async Task<ActionResult<UserViewModel>> Update(Guid id, UserEntity user)
     {
-        user.ID = id;
+        var entity = Mapper.Map<UserEntity>(user);
+        entity.ID = id;
 
-        Context.Attach(user);
-        Context.Entry(user).State = EntityState.Modified;
-        Context.Entry(user).Property(x => x.TelegramID).IsModified = false;
+        Context.Attach(entity);
+        Context.Entry(entity).State = EntityState.Modified;
+        Context.Entry(entity).Property(x => x.TelegramID).IsModified = false;
 
         await Context.SaveChangesAsync();
 
-        return await GetByID(user.ID);
+        return await GetByID(entity.ID);
     }
 
     [HttpDelete]

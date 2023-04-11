@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using OnboardingBot.Server.Models;
+using OnboardingBot.Shared.Models;
 
-namespace OnboardingBot.Shared.Entities;
+namespace OnboardingBot.Server.Entities;
 
 /// <summary>
 /// Сущность сотрудников.
@@ -37,6 +37,8 @@ public class UserEntity
     public string? MiddleName { get; set; }
     
     
-    
+    /// <summary>
+    /// Тип пользователя.
+    /// </summary>
     public UserRole Role { get; set; } = UserRole.User;
 }

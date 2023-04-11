@@ -1,7 +1,9 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OnboardingBot.Server.Entities;
 using OnboardingBot.Server.Services;
-using OnboardingBot.Shared.Entities;
+using OnboardingBot.Shared.ViewModels;
 
 namespace OnboardingBot.Server.Controllers;
 
@@ -11,21 +13,25 @@ public class TelegramCodeController : ControllerBase
 {
     private DBContext Context;
     private CodeService CodeService;
+    private IMapper Mapper;
 
-    public TelegramCodeController(DBContext context, CodeService codeService)
+    public TelegramCodeController(DBContext context, CodeService codeService, IMapper mapper)
     {
         Context = context;
         CodeService = codeService;
+        Mapper = mapper;
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<TelegramCodeEntity>>> GetAll()
+    public async Task<ActionResult<List<TelegramCodeViewModel>>> GetAll()
     {
-        return Context.TelegramCodes.ToList();
+        var res = Context.TelegramCodes.ToList();
+
+        return res.Select(x => Mapper.Map<TelegramCodeViewModel>(x)).ToList();
     }
 
     [HttpGet("id/{id}")]
-    public async Task<ActionResult<TelegramCodeEntity>> GetByID(Guid id)
+    public async Task<ActionResult<TelegramCodeViewModel>> GetByID(Guid id)
     {
         var code = await Context.TelegramCodes.FindAsync(id);
         if (code == null)
@@ -33,12 +39,12 @@ public class TelegramCodeController : ControllerBase
             return NotFound();
         }
 
-        return code;
+        return Mapper.Map<TelegramCodeViewModel>(code);
     }
 
 
     [HttpGet("code/{code}")]
-    public async Task<ActionResult<TelegramCodeEntity>> GetByCode(string code)
+    public async Task<ActionResult<TelegramCodeViewModel>> GetByCode(string code)
     {
         var entity = Context.TelegramCodes.AsNoTracking().AsEnumerable()
             .FirstOrDefault(x => x.Code.Equals(code, StringComparison.OrdinalIgnoreCase));
@@ -47,20 +53,26 @@ public class TelegramCodeController : ControllerBase
             return NotFound();
         }
 
-        return entity;
+        return Mapper.Map<TelegramCodeViewModel>(entity);
     }
 
     [HttpPost("generate")]
-    public async Task<ActionResult<TelegramCodeEntity>> Generate(Guid userId)
+    public async Task<ActionResult<TelegramCodeViewModel>> Generate(Guid userId)
     {
         var res = await CodeService.GenerateCode(userId);
-        return res;
+        return Mapper.Map<TelegramCodeViewModel>(res);
     }
 
     [HttpPost("connect")]
     public async Task<IActionResult> Connect(string code, long telegramUserId)
     {
-        var entity = (await GetByCode(code)).Value;
+        var entityId = (await GetByCode(code)).Value?.ID;
+        if (entityId == null)
+        {
+            return NotFound();
+        }
+
+        var entity = await Context.TelegramCodes.FindAsync(entityId);
         if (entity == null)
         {
             return NotFound();

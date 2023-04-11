@@ -1,5 +1,4 @@
-using Microsoft.EntityFrameworkCore;
-using OnboardingBot.Shared.Entities;
+using OnboardingBot.Server.Entities;
 
 namespace OnboardingBot.Server.Services;
 

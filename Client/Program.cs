@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using OnboardingBot.Server.Client;
+using OnboardingBot.Client;
 using MudBlazor.Services;
 using OnboardingBot.Client.Providers;
 

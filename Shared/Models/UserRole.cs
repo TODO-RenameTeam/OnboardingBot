@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace OnboardingBot.Server.Models;
+namespace OnboardingBot.Shared.Models;
 
 public enum UserRole
 {

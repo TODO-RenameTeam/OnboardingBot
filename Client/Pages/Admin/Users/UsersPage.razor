@@ -1,7 +1,7 @@
 @page "/admin/users"
-@using OnboardingBot.Shared.Entities
+@using OnboardingBot.Shared.ViewModels
 @using Refit
-@using OnboardingBot.Server.Shared.APIs
+@using OnboardingBot.Shared.APIs
 
 <PageTitle>Сотрудники</PageTitle>
 
@@ -29,13 +29,13 @@
     <MudTable Items="@Models">
         <HeaderContent>
             <MudTh>
-                <MudTableSortLabel SortBy="new Func<UserEntity, object>(x => x.LastName)">Фамилия</MudTableSortLabel>
+                <MudTableSortLabel SortBy="new Func<UserViewModel, object>(x => x.LastName)">Фамилия</MudTableSortLabel>
             </MudTh>
             <MudTh>
-                <MudTableSortLabel SortBy="new Func<UserEntity, object>(x => x.FirstName)">Имя</MudTableSortLabel>
+                <MudTableSortLabel SortBy="new Func<UserViewModel, object>(x => x.FirstName)">Имя</MudTableSortLabel>
             </MudTh>
             <MudTh>
-                <MudTableSortLabel SortBy="new Func<UserEntity, object>(x => x.MiddleName)">Отчество</MudTableSortLabel>
+                <MudTableSortLabel SortBy="new Func<UserViewModel, object>(x => x.MiddleName)">Отчество</MudTableSortLabel>
             </MudTh>
             <MudTh>
                 Действия
@@ -62,7 +62,7 @@
 
 @code
 {
-    private List<UserEntity> Models { get; set; } = new();
+    private List<UserViewModel> Models { get; set; } = new();
 
     [Inject]
     private IUserController ModelController { get; set; }

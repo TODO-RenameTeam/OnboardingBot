@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using OnboardingBot.Shared.Models;
 
-namespace OnboardingBot.Shared.Entities;
+namespace OnboardingBot.Server.Entities;
 
 /// <summary>
 /// Сущность кнопки.
@@ -16,11 +17,13 @@ public class ButtonEntity
     /// <summary>
     /// Название кнопки.
     /// </summary>
+    [Required]
     public string Name { get; set; }
     
     /// <summary>
     /// Значение кнопки.
     /// </summary>
+    [Required]
     public string Key { get; set; }
 
     /// <summary>
@@ -28,13 +31,4 @@ public class ButtonEntity
     /// Связано с параметром Key.
     /// </summary>
     public ButtonType Type { get; set; } = ButtonType.Command;
-}
-
-/// <summary>
-/// Перечисление возможных функционалов кнопки.
-/// </summary>
-public enum ButtonType
-{
-    [Display(Name = "Вызов команды")]
-    Command
 }

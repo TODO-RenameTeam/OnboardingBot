@@ -1,6 +1,9 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OnboardingBot.Shared.Entities;
+using OnboardingBot.Server.Entities;
+using OnboardingBot.Shared.EditModels;
+using OnboardingBot.Shared.ViewModels;
 
 namespace OnboardingBot.Server.Controllers;
 
@@ -9,20 +12,24 @@ namespace OnboardingBot.Server.Controllers;
 public class TextCommandController : ControllerBase
 {
     private DBContext Context;
+    private IMapper Mapper;
 
-    public TextCommandController(DBContext context)
+    public TextCommandController(DBContext context, IMapper mapper)
     {
         Context = context;
+        Mapper = mapper;
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<TextCommandEntity>>> GetAll()
+    public async Task<ActionResult<List<TextCommandViewModel>>> GetAll()
     {
-        return Context.TextCommands.ToList();
+        var res = Context.Tests.ToList();
+
+        return res.Select(x => Mapper.Map<TextCommandViewModel>(x)).ToList();
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<TextCommandEntity>> GetByID(Guid id)
+    public async Task<ActionResult<TextCommandViewModel>> GetByID(Guid id)
     {
         var textCommand = Context.TextCommands
             .Include(x => x.Buttons)
@@ -33,29 +40,33 @@ public class TextCommandController : ControllerBase
             return NotFound();
         }
 
-        return textCommand;
+        return Mapper.Map<TextCommandViewModel>(textCommand);
     }
 
     [HttpPost]
-    public async Task<ActionResult<TextCommandEntity>> Create(TextCommandEntity textCommand)
+    public async Task<ActionResult<TextCommandViewModel>> Create(TextCommandEditModel textCommand)
     {
-        Context.TextCommands.Add(textCommand);
+        var entity = Mapper.Map<TextCommandEntity>(textCommand);
+        
+        Context.TextCommands.Add(entity);
         await Context.SaveChangesAsync();
 
-        return await GetByID(textCommand.ID);
+        return await GetByID(entity.ID);
     }
 
     [HttpPut]
-    public async Task<ActionResult<TextCommandEntity>> Update(Guid id, TextCommandEntity textCommand)
+    public async Task<ActionResult<TextCommandViewModel>> Update(Guid id, TextCommandEditModel textCommand)
     {
-        textCommand.ID = id;
+        var entity = Mapper.Map<TextCommandEntity>(textCommand);
 
-        Context.Attach(textCommand);
-        Context.Entry(textCommand).State = EntityState.Modified;
+        entity.ID = id;
+
+        Context.Attach(entity);
+        Context.Entry(entity).State = EntityState.Modified;
 
         await Context.SaveChangesAsync();
 
-        return await GetByID(textCommand.ID);
+        return await GetByID(entity.ID);
     }
 
     [HttpDelete]

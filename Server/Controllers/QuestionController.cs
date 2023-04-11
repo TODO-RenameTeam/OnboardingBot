@@ -1,6 +1,9 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OnboardingBot.Shared.Entities;
+using OnboardingBot.Server.Entities;
+using OnboardingBot.Shared.EditModels;
+using OnboardingBot.Shared.ViewModels;
 
 namespace OnboardingBot.Server.Controllers;
 
@@ -9,22 +12,26 @@ namespace OnboardingBot.Server.Controllers;
 public class QuestionController : ControllerBase
 {
     private DBContext Context;
+    private IMapper Mapper;
 
-    public QuestionController(DBContext context)
+    public QuestionController(DBContext context, IMapper mapper)
     {
         Context = context;
+        Mapper = mapper;
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<QuestionEntity>>> GetAll()
+    public async Task<ActionResult<List<QuestionViewModel>>> GetAll()
     {
-        return Context.Questions.ToList();
+        var res = Context.Questions.ToList();
+
+        return res.Select(x => Mapper.Map<QuestionViewModel>(x)).ToList();
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<QuestionEntity>> GetByID(Guid id)
+    public async Task<ActionResult<QuestionViewModel>> GetByID(Guid id)
     {
-        var question = Context.Questions.Include(x=>x.Answers)
+        var question = Context.Questions.Include(x => x.Answers)
             .FirstOrDefault(x => x.ID == id);
 
         if (question == null)
@@ -32,29 +39,33 @@ public class QuestionController : ControllerBase
             return NotFound();
         }
 
-        return question;
+        return Mapper.Map<QuestionViewModel>(question);
     }
 
     [HttpPost]
-    public async Task<ActionResult<QuestionEntity>> Create(QuestionEntity question)
+    public async Task<ActionResult<QuestionViewModel>> Create(QuestionEditModel question)
     {
-        Context.Questions.Add(question);
+        var entity = Mapper.Map<QuestionEntity>(question);
+
+        Context.Questions.Add(entity);
         await Context.SaveChangesAsync();
 
-        return await GetByID(question.ID);
+        return await GetByID(entity.ID);
     }
 
     [HttpPut]
-    public async Task<ActionResult<QuestionEntity>> Update(Guid id, QuestionEntity question)
+    public async Task<ActionResult<QuestionViewModel>> Update(Guid id, QuestionEntity question)
     {
-        question.ID = id;
+        var entity = Mapper.Map<QuestionEntity>(question);
 
-        Context.Attach(question);
-        Context.Entry(question).State = EntityState.Modified;
+        entity.ID = id;
+
+        Context.Attach(entity);
+        Context.Entry(entity).State = EntityState.Modified;
 
         await Context.SaveChangesAsync();
 
-        return await GetByID(question.ID);
+        return await GetByID(entity.ID);
     }
 
     [HttpDelete]

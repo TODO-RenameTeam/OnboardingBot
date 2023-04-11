@@ -1,6 +1,8 @@
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OnboardingBot.Shared.Entities;
+using OnboardingBot.Server.Entities;
+using OnboardingBot.Shared.ViewModels;
 
 namespace OnboardingBot.Server.Controllers;
 
@@ -9,20 +11,24 @@ namespace OnboardingBot.Server.Controllers;
 public class UserTestAnswerController : ControllerBase
 {
     private DBContext Context;
+    private IMapper Mapper;
 
-    public UserTestAnswerController(DBContext context)
+    public UserTestAnswerController(DBContext context, IMapper mapper)
     {
         Context = context;
+        Mapper = mapper;
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<UserTestAnswerEntity>>> GetAll()
+    public async Task<ActionResult<List<UserTestAnswerViewModel>>> GetAll()
     {
-        return Context.UserTestAnswers.ToList();
+        var res = Context.UserTestAnswers.ToList();
+
+        return res.Select(x => Mapper.Map<UserTestAnswerViewModel>(x)).ToList();
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<UserTestAnswerEntity>> GetByID(Guid id)
+    public async Task<ActionResult<UserTestAnswerViewModel>> GetByID(Guid id)
     {
         var userTestAnswer = await Context.UserTestAnswers.FindAsync(id);
         if (userTestAnswer == null)
@@ -30,7 +36,7 @@ public class UserTestAnswerController : ControllerBase
             return NotFound();
         }
 
-        return userTestAnswer;
+        return Mapper.Map<UserTestAnswerViewModel>(userTestAnswer);
     }
 
     [HttpPost("answer")]
@@ -74,16 +80,17 @@ public class UserTestAnswerController : ControllerBase
     }
 
     [HttpPut]
-    public async Task<ActionResult<UserTestAnswerEntity>> Update(Guid id, UserTestAnswerEntity userTestAnswer)
+    public async Task<ActionResult<UserTestAnswerViewModel>> Update(Guid id, UserTestAnswerViewModel userTestAnswer)
     {
-        userTestAnswer.ID = id;
+        var entity = Mapper.Map<UserTestAnswerEntity>(userTestAnswer);
+        entity.ID = id;
 
-        Context.Attach(userTestAnswer);
-        Context.Entry(userTestAnswer).State = EntityState.Modified;
+        Context.Attach(entity);
+        Context.Entry(entity).State = EntityState.Modified;
 
         await Context.SaveChangesAsync();
 
-        return await GetByID(userTestAnswer.ID);
+        return await GetByID(entity.ID);
     }
 
     [HttpDelete]

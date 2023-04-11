@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace OnboardingBot.Shared.Entities;
+namespace OnboardingBot.Server.Entities;
 
 /// <summary>
 /// Сущность текстовых комманд.
@@ -23,12 +23,17 @@ public class TextCommandEntity
     /// <summary>
     /// Слово, на которое будет вызываться команда.
     /// </summary>
-    public string ExecutingCommand { get; set; }
+    public string Template { get; set; }
 
     /// <summary>
     /// Текст, отправляемый пользователю.
     /// </summary>
     public string Text { get; set; } = String.Empty;
+
+    public HashSet<string>? Images { get; set; } = new();
+    public HashSet<string>? Urls { get; set; } = new();
+
+    public int QuizesCount { get; set; } = 0;
 
     /// <summary>
     /// ID должности, для которой будет видна эта команда.
@@ -39,7 +44,8 @@ public class TextCommandEntity
     /// <summary>
     /// Сущность должности.
     /// </summary>
-    [ForeignKey(nameof(PositionID))] public PositionEntity? Position { get; set; }
+    [ForeignKey(nameof(PositionID))]
+    public PositionEntity? Position { get; set; }
 
     /// <summary>
     /// Сущность кнопок.

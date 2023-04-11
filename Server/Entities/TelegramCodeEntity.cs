@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace OnboardingBot.Shared.Entities;
+namespace OnboardingBot.Server.Entities;
 
 /// <summary>
 /// Сущность привязки Telegram к аккаунту.
@@ -17,6 +17,7 @@ public class TelegramCodeEntity
     /// <summary>
     /// ID пользователя в системе.
     /// </summary>
+    [Required]
     public Guid UserID { get; set; }
 
     /// <summary>

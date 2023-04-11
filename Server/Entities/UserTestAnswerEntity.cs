@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace OnboardingBot.Shared.Entities;
+namespace OnboardingBot.Server.Entities;
 
 /// <summary>
 /// Сущность сбора ответов с теста.
@@ -30,15 +30,4 @@ public class UserTestAnswerEntity
     /// Дата и время окончания тестирования.
     /// </summary>
     public DateTime? DateTimeEnding { get; set; }
-}
-
-public class UserAnswerEntity
-{
-    public Guid ID { get; set; }
-    [ForeignKey(nameof(UserID))] public UserEntity? User { get; set; }
-    public Guid UserID { get; set; }
-    public Guid QuestionID { get; set; }
-    [ForeignKey(nameof(QuestionID))] public QuestionEntity? Question { get; set; }
-    public Guid AnswerID { get; set; }
-    [ForeignKey(nameof(QuestionID))] public AnswerEntity? Answer { get; set; }
 }

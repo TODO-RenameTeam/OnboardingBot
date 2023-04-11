@@ -1,13 +1,13 @@
-using OnboardingBot.Shared.Entities;
+using OnboardingBot.Shared.ViewModels;
 using Refit;
 
-namespace OnboardingBot.Server.Shared.APIs;
+namespace OnboardingBot.Shared.APIs;
 
 public interface IUserController
 {
     [Get("/api/user")]
-    Task<List<UserEntity>> GetAll();
+    Task<List<UserViewModel>> GetAll();
     
     [Get("/api/user/{id}")]
-    Task<UserEntity> GetByID(Guid id);
+    Task<UserViewModel> GetByID(Guid id);
 }
