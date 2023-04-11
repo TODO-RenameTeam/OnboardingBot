@@ -31,6 +31,9 @@ public class RefitProvider
 
         var apiUrl = url;
 
+        services.AddRefitClient<ITextCommandController>(refitSettings)
+            .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
+        
         services.AddRefitClient<IUserController>(refitSettings)
             .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
     }

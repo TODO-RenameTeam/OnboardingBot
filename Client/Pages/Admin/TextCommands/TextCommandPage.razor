@@ -1,0 +1,237 @@
+@page "/admin/textcommands/{ID:guid}/edit"
+@page "/admin/textcommands/create"
+
+@using Refit
+@using AutoMapper
+@using OnboardingBot.Shared.APIs
+@using OnboardingBot.Shared.EditModels
+@using OnboardingBot.Shared.ViewModels
+@using System.ComponentModel.DataAnnotations
+@using OnboardingBot.Shared.Extensions
+@layout AdminLayout
+
+<PageTitle>@PageTitle</PageTitle>
+
+<MudGrid>
+    <MudItem>
+        <MudFab DisableElevation="true"
+                StartIcon="@Icons.Material.Filled.ArrowBack"
+                Text="Назад" Href="/admin/textcommands"/>
+    </MudItem>
+    <MudItem>
+        <MudText Typo="Typo.h3">@PageTitle</MudText>
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <EditForm Model="@Model" OnValidSubmit="OnValidSumbit">
+            <DataAnnotationsValidator/>
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField Label="Название" @bind-Value="Model.Name" For="() => Model.Name"/>
+                    <MudTextField Label="Шаблон" @bind-Value="Model.Template"
+                                  For="() => Model.Template"/>
+                    <MudTextField Label="Отправляемый текст" @bind-Value="Model.Text"
+                                  For="() => Model.Text"/>
+                    <MudNumericField
+                        Label="Кол-во квизов"
+                        @bind-Value="@Model.QuizesCount"
+                        For="() => Model.QuizesCount"/>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudFab ButtonType="ButtonType.Submit"
+                            Variant="Variant.Filled"
+                            DisableElevation="true"
+                            StartIcon="@Icons.Material.Filled.Save"
+                            Text="Сохранить"
+                            Color="Color.Primary"/>
+                </MudCardActions>
+            </MudCard>
+        </EditForm>
+    </MudItem>
+
+    <MudItem xs="12" sm="6">
+        @* Зона кнопок *@
+        <MudFab StartIcon="@Icons.Material.Filled.Add"
+                Color="Color.Success"
+                Size="Size.Small" Text="Добавить звонок"
+                Label="Добавить кнопку"
+                DisableElevation="true"
+                OnClick="AddButton"/>
+        <MudTable Items="@Model.Buttons" Dense="true"
+                  RowEditPreview="BackupItem"
+                  RowEditCancel="ResetItemToOriginalValues"
+                  CanCancelEdit="true">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Кнопки</MudText>
+                <MudSpacer/>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>
+                </MudTh>
+                <MudTh>
+                    Название кнопки
+                </MudTh>
+                <MudTh>
+                    Ключ
+                </MudTh>
+                <MudTh>
+                    <MudTableSortLabel SortBy="new Func<ButtonViewModel, object>(x => x.Type)">Тип кнопки</MudTableSortLabel>
+                </MudTh>
+                <MudTh>
+                    Действие
+                </MudTh>
+            </HeaderContent>
+            <RowTemplate Context="button">
+                <MudTd DataLabel="Название кнопки">@button.Name</MudTd>
+                <MudTd DataLabel="Ключ">@button.Key</MudTd>
+                <MudTd DataLabel="Тип кнопки">@(button.Type.GetAttribute<DisplayAttribute, OnboardingBot.Shared.Models.ButtonType>().Name)</MudTd>
+                <MudTd DataLabel="Действие">
+                    <MudFab Text="Удалить" Label="Удалить"
+                            Size="Size.Small"
+                            Color="Color.Error"
+                            StartIcon="@Icons.Material.Filled.Delete"
+                            OnClick="() => RemoveButton(button)"
+                            DisableElevation="true"/>
+
+                </MudTd>
+            </RowTemplate>
+            <RowEditingTemplate Context="button">
+                <MudTd DataLabel="Название кнопки">
+                    <MudTextField T="string"
+                                  Label="Название кнопки"
+                                  @bind-Value="@button.Name"
+                                  Required="true"/>
+                </MudTd>
+                <MudTd DataLabel="Ключ">
+                    <MudTextField T="string"
+                                  Label="Ключ"
+                                  @bind-Value="@button.Key"
+                                  Required="true"/>
+                </MudTd>
+                <MudTd DataLabel="Тип кнопки">
+                    <MudAutocomplete @bind-Value="@button.Type"
+                                     Label="Тип кнопки"
+                                     SearchFunc="@SearchButtonType"
+                                     ToStringFunc=@(x => x.GetAttribute<DisplayAttribute, OnboardingBot.Shared.Models.ButtonType>().Name)>
+                        
+                    </MudAutocomplete>
+                </MudTd>
+            </RowEditingTemplate>
+        </MudTable>
+    </MudItem>
+</MudGrid>
+
+@code
+{
+    [Parameter]
+    public Guid? ID { get; set; }
+
+    public bool IsEdit => ID != null;
+
+    public string PageTitle => IsEdit ? "Изменение текстовой команды" : "Создание текстовой команды";
+
+    public TextCommandEditModel Model { get; set; } = new();
+
+    [Inject]
+    public ITextCommandController ModelController { get; set; }
+
+    [Inject]
+    public IMapper Mapper { get; set; }
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; }
+
+    public List<OnboardingBot.Shared.Models.ButtonType> ButtonTypes { get; set; } = new(Enum.GetValues<OnboardingBot.Shared.Models.ButtonType>());
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDates();
+    }
+
+    private async Task<IEnumerable<OnboardingBot.Shared.Models.ButtonType>> SearchButtonType(string arg)
+    {
+        if (string.IsNullOrWhiteSpace(arg))
+        {
+            return ButtonTypes;
+        }
+
+        return ButtonTypes.Where(x =>
+            x.GetAttribute<DisplayAttribute, OnboardingBot.Shared.Models.ButtonType>().Name
+                .Contains(arg, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private async Task LoadDates()
+    {
+        try
+        {
+            if (IsEdit)
+            {
+                Model = Mapper.Map<TextCommandEditModel>(await ModelController.GetByID(ID.GetValueOrDefault()));
+            }
+        }
+        catch (ApiException e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+
+    private async Task OnValidSumbit()
+    {
+        try
+        {
+            var result = IsEdit
+                ? await ModelController.Update(ID.GetValueOrDefault(), Model)
+                : await ModelController.Create(Model);
+
+            Model = Mapper.Map<TextCommandEditModel>(result);
+            NavigationManager.NavigateTo($"/admin/textcommands/{result.ID}/edit");
+            Snackbar.Add("Текстовая команда успешно сохранена");
+        }
+        catch (ValidationApiException validationException)
+        {
+            Snackbar.Add(validationException.Content.Detail, Severity.Error);
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(exception.RequestMessage.Content.ToString(), Severity.Error);
+        }
+    }
+
+
+    private ButtonViewModel ButtonBeforeEdit { get; set; }
+
+    private void AddButton()
+    {
+        Model.Buttons.Add(new()
+        {
+        });
+        StateHasChanged();
+    }
+
+    private void RemoveButton(ButtonViewModel button)
+    {
+        Model.Buttons.Remove(button);
+    }
+
+    private void BackupItem(object element)
+    {
+        ButtonBeforeEdit = new()
+        {
+            ID = ((ButtonViewModel)element).ID,
+            Name = ((ButtonViewModel)element).Name,
+            Key = ((ButtonViewModel)element).Key,
+            Type = ((ButtonViewModel)element).Type,
+        };
+    }
+
+    private void ResetItemToOriginalValues(object element)
+    {
+        ((ButtonViewModel)element).ID = ButtonBeforeEdit.ID;
+        ((ButtonViewModel)element).Name = ButtonBeforeEdit.Name;
+        ((ButtonViewModel)element).Key = ButtonBeforeEdit.Key;
+        ((ButtonViewModel)element).Type = ButtonBeforeEdit.Type;
+    }
+}

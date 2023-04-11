@@ -1,0 +1,111 @@
+@page "/admin/textcommands"
+@using OnboardingBot.Shared.ViewModels
+@using Refit
+@using OnboardingBot.Shared.APIs
+@using OnboardingBot.Shared.EditModels
+
+<PageTitle>Текстовые комманды</PageTitle>
+
+<MudGrid>
+    <MudItem>
+        <MudFab DisableElevation="true"
+                StartIcon="@Icons.Material.Filled.ArrowBack"
+                Text="Домой" Href="/admin" Label="Домой"/>
+    </MudItem>
+    <MudItem>
+        <MudText Typo="Typo.h3" GutterBottom="true">Текстовые комманды</MudText>
+    </MudItem>
+    <MudItem>
+        <MudFab StartIcon="@Icons.Material.Filled.Add"
+                Size="Size.Small"
+                Color="Color.Success"
+                Label="Добавить"
+                Text="Добавить"
+                DisableElevation="true"
+                Href="/admin/textcommands/create"/>
+    </MudItem>
+</MudGrid>
+
+<MudPaper>
+    <MudTable Items="@Models">
+        <HeaderContent>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<TextCommandViewModel, object>(x => x.Name)">Название</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<TextCommandViewModel, object>(x => x.Template)">Шаблон</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<TextCommandViewModel, object>(x => x.QuizesCount)">Кол-во квизов</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                Действия
+            </MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>
+                @context.Name
+            </MudTd>
+            <MudTd>
+                @context.Template
+            </MudTd>
+            <MudTd>
+                @context.QuizesCount
+            </MudTd>
+            <MudTd>
+                @* <MudButton Size="Size.Small" Color="Color.Success" Href="@($"/admin/textcommands/{context.ID}/info")">Инфо</MudButton> *@
+                <MudButton Size="Size.Small" Color="Color.Warning" Href="@($"/admin/textcommands/{context.ID}/edit")">Изменить</MudButton>
+                <MudButton Size="Size.Small" Color="Color.Error" OnClick="(() => OnDeleteModel(context))">Удалить</MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code
+{
+    private List<TextCommandViewModel> Models { get; set; } = new();
+
+    [Inject]
+    private ITextCommandController ModelController { get; set; }
+    
+    [Inject]
+    private IDialogService DialogService { get; set; }
+    
+    [Inject]
+    private ISnackbar Snackbar { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Models = await ModelController.GetAll();
+        }
+        catch (ApiException e)
+        {
+            Console.WriteLine(e);
+            // throw;
+        }
+    }
+    
+    private async Task OnDeleteModel(TextCommandViewModel model)
+    {
+        var result = await DialogService.ShowMessageBox("Подтверждение",
+            $"Вы точно хотите удалить {model.Name}?", "Да", "Нет");
+
+        if (!result.GetValueOrDefault(false))
+        {
+            return;
+        }
+
+        try
+        {
+            await ModelController.Delete(model.ID);
+            Models = await ModelController.GetAll();
+            Snackbar.Add("Текстовая команда успешно удалена!", Severity.Success);
+        }
+        catch (ValidationApiException validationException)
+        {
+            Snackbar.Add(validationException.Content.Detail, Severity.Error);
+        }
+    }
+}
