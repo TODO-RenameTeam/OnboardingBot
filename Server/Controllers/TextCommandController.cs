@@ -23,7 +23,10 @@ public class TextCommandController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<TextCommandViewModel>>> GetAll()
     {
-        var res = Context.TextCommands.ToList();
+        var res = Context.TextCommands.Include(x=>x.Buttons)
+            .Include(x=>x.Images)
+            .Include(x=>x.Position)
+            .Include(x=>x.Urls).ToList();
 
         return res.Select(x => Mapper.Map<TextCommandViewModel>(x)).ToList();
     }
