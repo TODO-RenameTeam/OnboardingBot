@@ -14,9 +14,10 @@ public class UserController : ControllerBase
     private DBContext Context;
     private IMapper Mapper;
 
-    public UserController(DBContext context)
+    public UserController(DBContext context, IMapper mapper)
     {
         Context = context;
+        Mapper = mapper;
     }
 
     [HttpGet]
