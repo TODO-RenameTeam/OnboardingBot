@@ -59,7 +59,12 @@ public class TelegramCodeController : ControllerBase
     [HttpPost("generate")]
     public async Task<ActionResult<TelegramCodeViewModel>> Generate(Guid userId)
     {
-        var res = await CodeService.GenerateCode(userId);
+        var res = Context.TelegramCodes.FirstOrDefault(x => x.UserID == userId);
+        if (res == null)
+        {
+            res = await CodeService.GenerateCode(userId);
+        }
+
         return Mapper.Map<TelegramCodeViewModel>(res);
     }
 
@@ -78,10 +83,10 @@ public class TelegramCodeController : ControllerBase
             return NotFound();
         }
 
-        if (entity.DateTimeExist <= DateTime.Now)
-        {
-            return BadRequest("Код привязки более недействителен.");
-        }
+        // if (entity.DateTimeExist <= DateTime.Now)
+        // {
+        //     return BadRequest("Код привязки более недействителен.");
+        // }
 
         var user = await Context.Users.FindAsync(entity.UserID);
         if (user == null)

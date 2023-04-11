@@ -39,6 +39,19 @@ public class UserController : ControllerBase
         return Mapper.Map<UserViewModel>(user);
     }
 
+
+    [HttpGet("tg")]
+    public async Task<ActionResult<UserViewModel>> GetByTelegramID(long id)
+    {
+        var user = Context.Users.FirstOrDefault(x => x.TelegramID == id);
+        if (user == null)
+        {
+            return NotFound();
+        }
+
+        return Mapper.Map<UserViewModel>(user);
+    }
+
     [HttpPost]
     public async Task<ActionResult<UserViewModel>> Create(UserEditModel user)
     {
