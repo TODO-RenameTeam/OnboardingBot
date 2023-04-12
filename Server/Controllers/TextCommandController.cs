@@ -24,7 +24,8 @@ public class TextCommandController : ControllerBase
     public async Task<ActionResult<List<TextCommandViewModel>>> GetAll()
     {
         var res = Context.TextCommands.Include(x=>x.Buttons)
-            .Include(x=>x.Position).ToList();
+            .Include(x=>x.Position)
+            .Include(x => x.Quizes).ToList();
 
         return res.Select(x => Mapper.Map<TextCommandViewModel>(x)).ToList();
     }
@@ -48,8 +49,20 @@ public class TextCommandController : ControllerBase
     public async Task<ActionResult<TextCommandViewModel>> Create(TextCommandEditModel textCommand)
     {
         var entity = Mapper.Map<TextCommandEntity>(textCommand);
-        
+        entity.Quizes.Clear();
+
         Context.TextCommands.Add(entity);
+        await Context.SaveChangesAsync();
+        
+        foreach (var quizViewModel in textCommand.Quizes)
+        {
+            var quiz = await Context.Quizes.FindAsync(quizViewModel.ID);
+            if (quiz != null)
+            {
+                entity.Quizes.Add(quiz);
+            }
+        }
+
         await Context.SaveChangesAsync();
 
         return await GetByID(entity.ID);
@@ -61,12 +74,24 @@ public class TextCommandController : ControllerBase
         var entity = Mapper.Map<TextCommandEntity>(textCommand);
 
         entity.ID = id;
+        entity.Quizes.Clear();
 
         Context.Attach(entity);
         Context.Entry(entity).State = EntityState.Modified;
 
         await Context.SaveChangesAsync();
+  
+        foreach (var quizViewModel in textCommand.Quizes)
+        {
+            var quiz = await Context.Quizes.FindAsync(quizViewModel.ID);
+            if (quiz != null)
+            {
+                entity.Quizes.Add(quiz);
+            }
+        }
 
+        await Context.SaveChangesAsync();
+        
         return await GetByID(entity.ID);
     }
 
