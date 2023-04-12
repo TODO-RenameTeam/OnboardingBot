@@ -111,6 +111,10 @@ public class TextCommandController : ControllerBase
             {
                 entity.Buttons.Add(buttonEnt);
             }
+            else
+            {
+                entity.Buttons.Add(Mapper.Map<ButtonEntity>(button));
+            }
         }
 
         await Context.SaveChangesAsync();
