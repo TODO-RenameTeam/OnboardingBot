@@ -92,7 +92,8 @@ public class UserQuestionController : ControllerBase
             Context.Entry(entity).Property(x => x.DateTimeQuestion).IsModified = false;
         }
 
-
+        // todo SEND MESSAGE TO TG BOT
+        
         await Context.SaveChangesAsync();
 
         return await GetByID(entity.ID);

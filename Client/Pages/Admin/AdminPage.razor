@@ -1,5 +1,8 @@
 @page "/admin"
 @page "/admin/index"
+@using OnboardingBot.Shared.APIs
+@using OnboardingBot.Shared.ViewModels
+@using QuestionBot.Shared.APIs
 
 @layout AdminLayout
 
@@ -22,7 +25,7 @@
                 Активных пользователей:
             </MudText>
             <MudText Typo="Typo.h3">
-                0
+                @(Users.Count(x=>x.TelegramID != null))
             </MudText>
         </MudPaper>
     </MudItem>
@@ -32,12 +35,36 @@
                 Вопросы, ожидающие ответы:
             </MudText>
             <MudText Typo="Typo.h3">
-                0
+                @(UserQuestions.Count(x => string.IsNullOrWhiteSpace(x.Answer)))
             </MudText>
         </MudPaper>
     </MudItem>
 </MudGrid>
 
 @code {
+
+    [Inject]
+    public IUserController UserController { get; set; }
+
+    public List<UserViewModel> Users { get; set; } = new();
+
+    [Inject]
+    public IUserQuestionController UserQuestionController { get; set; }
+    
+    public List<UserQuestionViewModel> UserQuestions { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Users = await UserController.GetAll();
+            UserQuestions = await UserQuestionController.GetAll();
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
 
 }

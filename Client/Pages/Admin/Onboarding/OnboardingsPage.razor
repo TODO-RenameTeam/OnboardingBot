@@ -46,6 +46,7 @@
                 @(context.Position.Name ?? "не указана")
             </MudTd>
             <MudTd>
+                <MudButton Size="Size.Small" Color="Color.Success" Href="@($"/admin/onboardings/{context.ID}/users")">Инфо о прохождении</MudButton>
                 <MudButton Size="Size.Small" Color="Color.Warning" Href="@($"/admin/onboardings/{context.ID}/edit")">Изменить</MudButton>
                 <MudButton Size="Size.Small" Color="Color.Error" OnClick="(() => OnDeleteModel(context))">Удалить</MudButton>
             </MudTd>
