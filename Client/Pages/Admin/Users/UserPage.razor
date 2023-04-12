@@ -76,7 +76,6 @@
     public IPositionController PositionController { get; set; }
 
     public List<PositionViewModel> Positions { get; set; } = new();
-    public PositionViewModel? SelectedPosition { get; set; } = null!;
 
     [Inject]
     public IMapper Mapper { get; set; }
@@ -128,7 +127,7 @@
                 Model = Mapper.Map<UserEditModel>(await ModelController.GetByID(ID.GetValueOrDefault()));
                 if (Model.PositionID != null)
                 {
-                    SelectedPosition = Positions.FirstOrDefault(x => x.ID == Model.PositionID);
+                    Model.Position = Positions.FirstOrDefault(x => x.ID == Model.PositionID);
                 }
             }
         }
@@ -140,7 +139,10 @@
 
     private async Task OnValidSumbit()
     {
-        Model.PositionID = SelectedPosition?.ID ?? null;
+        if (Model.Position != null)
+        {
+            Model.PositionID = Model.Position.ID;
+        }
 
         try
         {
