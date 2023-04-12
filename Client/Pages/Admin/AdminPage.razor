@@ -37,6 +37,9 @@
             <MudText Typo="Typo.h3">
                 @(UserQuestions.Count(x => string.IsNullOrWhiteSpace(x.Answer)))
             </MudText>
+            <MudFab DisableElevation="true"
+                            StartIcon="@Icons.Material.Filled.ArrowForward"
+                            Size="Size.Small" Href="admin/userquestions" Label="Открыть вопросы"/>
         </MudPaper>
     </MudItem>
 </MudGrid>

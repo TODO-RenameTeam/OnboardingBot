@@ -47,6 +47,9 @@
                 <MudTableSortLabel SortBy="new Func<UserViewModel, object>(x => x.Role)">Роль</MudTableSortLabel>
             </MudTh>
             <MudTh>
+                <MudTableSortLabel SortBy="new Func<UserViewModel, object>(x => x.Position)">Должность</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
                 <MudTableSortLabel SortBy="new Func<UserViewModel, object>(x => x.TelegramID)">Статус привязки</MudTableSortLabel>
             </MudTh>
             <MudTh>
@@ -67,8 +70,18 @@
                 @(context.Role.GetAttribute<DisplayAttribute, UserRole>().Name)
             </MudTd>
             <MudTd>
-                <MudChip Color="@(context.TelegramID == null? Color.Error : Color.Success)" Size="Size.Small">
-                     @(context.TelegramID == null ? "Не привязан к ТГ" : "Привязан к ТГ")
+                @if (context.Position == null)
+                {
+                    <MudChip Color="Color.Warning" Size="Size.Small">Должность не указана</MudChip>
+                }
+                else
+                {
+                    @context.Position.Name
+                }
+            </MudTd>
+            <MudTd>
+                <MudChip Color="@(context.TelegramID == null ? Color.Error : Color.Success)" Size="Size.Small">
+                    @(context.TelegramID == null ? "Не привязан к ТГ" : "Привязан к ТГ")
                 </MudChip>
             </MudTd>
             <MudTd>

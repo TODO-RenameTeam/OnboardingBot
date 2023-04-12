@@ -19,6 +19,9 @@
         <MudText Typo="Typo.h3">@PageTitle</MudText>
     </MudItem>
     <MudItem xs="12">
+            <MudText Typo="Typo.h5">Онбоардинг для должности @Model?.Position?.Name</MudText>
+        </MudItem>
+    <MudItem xs="12">
         <MudTable Items="@UserOnboardings">
             <HeaderContent>
                 <MudTh>
@@ -60,10 +63,10 @@
     <MudItem xs="12" md="4">
         <MudPaper Class="pa-3">
             <MudText Typo="Typo.h6">
-                Непрошедшие сотрудники:
+                Незакончили проходить:
             </MudText>
             <MudText Typo="Typo.h3">
-                @(Users.Count - UserOnboardings.Count(x => x.UserCurrentStepID ==
+                @(Users.Count(x=>x.PositionID == Model.PositionID) - UserOnboardings.Count(x => x.UserCurrentStepID ==
                                                            Model.StepPositions!.MaxBy(x => x.Position)?.StepID))
             </MudText>
         </MudPaper>

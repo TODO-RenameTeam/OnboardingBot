@@ -23,7 +23,11 @@ public class UserOnboardingController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<UserOnboardingViewModel>>> GetAll()
     {
-        var res = Context.UserOnboardings.ToList();
+        var res = Context.UserOnboardings
+            .Include(x => x.User)
+            .Include(x => x.RoleOnboarding)
+            .Include(x => x.UserCurrentStep)
+            .ToList();
 
         return res.Select(x => Mapper.Map<UserOnboardingViewModel>(x)).ToList();
     }
@@ -31,7 +35,8 @@ public class UserOnboardingController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<UserOnboardingViewModel>> GetByID(Guid id)
     {
-        var userOnboarding = Context.UserOnboardings.Include(x => x.User)
+        var userOnboarding = Context.UserOnboardings
+            .Include(x => x.User)
             .Include(x => x.RoleOnboarding)
             .Include(x => x.UserCurrentStep)
             .FirstOrDefault(x => x.ID == id);

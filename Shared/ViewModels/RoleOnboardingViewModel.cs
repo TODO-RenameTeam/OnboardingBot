@@ -4,7 +4,7 @@ public class RoleOnboardingViewModel
 {
     public Guid ID { get; set; }
     public Guid PositionID { get; set; }
-    public PositionViewModel? Position { get; set; }
+    public PositionViewModel? Position { get; set; } = new();
 
     public int StepsCount { get; set; }
     public HashSet<UserOnboardingViewModel>? UserSteps { get; set; } = new();
