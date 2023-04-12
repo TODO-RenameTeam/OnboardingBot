@@ -23,7 +23,12 @@ public class RoleOnboardingController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<RoleOnboardingViewModel>>> GetAll()
     {
-        var res = Context.RoleOnboardings.ToList();
+        var res = Context.RoleOnboardings
+            .Include(x => x.Position)
+            .Include(x => x.UserSteps)
+            .Include(x => x.Steps)
+            .Include(x => x.StepPositions)
+            .ToList();
 
         return res.Select(x => Mapper.Map<RoleOnboardingViewModel>(x)).ToList();
     }
@@ -106,9 +111,12 @@ public class RoleOnboardingController : ControllerBase
 
         await Context.SaveChangesAsync();
 
-        entity = Context.RoleOnboardings.Include(x => x.StepPositions)
-            .FirstOrDefault(x => x.ID == id);
+        entity = Context.RoleOnboardings
+            .Include(x => x.StepPositions)
+            .Include(x => x.Steps)
+            .FirstOrDefault(x => x.ID == id)!;
         entity.StepPositions.Clear();
+        entity.Steps.Clear();
 
         await Context.SaveChangesAsync();
 
@@ -121,10 +129,13 @@ public class RoleOnboardingController : ControllerBase
                 {
                     StepID = step.ID,
                     Step = step,
-                    Position = roleOnboardingStepViewModel.Position
+                    Position = roleOnboardingStepViewModel.Position,
+                    RoleOnboardingID = entity.ID
                 });
             }
         }
+        
+        await Context.SaveChangesAsync();
 
         return await GetByID(entity.ID);
     }

@@ -85,15 +85,9 @@
                     </MudTable>
                 </MudStep>
                 <MudStep Title="Проверка" StatusChanged="FinishStatusChanged">
-                    <MudForm @ref="_form2">
-                        <MudStack>
-                            <MudTextField T="string" Label="Card Number" Required="true"/>
-                            <MudStack Row="true">
-                                <MudTextField T="string" Label="Expire Date" Required="true"/>
-                                <MudTextField T="string" Label="CVC" Required="true"/>
-                            </MudStack>
-                        </MudStack>
-                    </MudForm>
+                    <MudStack>
+                        <MudText>Тут будет текст</MudText>
+                    </MudStack>
                 </MudStep>
                 <MudStep Title="Result Step" IsResultStep="true">
                     <div class="d-flex flex-column align-center justify-center" style="height: 200px">
@@ -195,6 +189,12 @@
             StateHasChanged();
             return !_form.IsValid;
         }
+        else if (_stepper.GetActiveIndex() == 1)
+        {
+            await _form2.Validate();
+            StateHasChanged();
+            return !_form2.IsValid;
+        }
         else if (_stepper.GetActiveIndex() == 2)
         {
             await _form2.Validate();
@@ -293,6 +293,10 @@
 
     private void AddStep()
     {
+        if (SelectedStep == null)
+        {
+            return;
+        }
         Model.Steps.Add(SelectedStep);
         Model.StepPositions.Add(new()
         {
