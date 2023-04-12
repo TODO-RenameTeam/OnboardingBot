@@ -35,6 +35,64 @@
                         Label="Кол-во квизов"
                         @bind-Value="@Model.QuizesCount"
                         For="() => Model.QuizesCount"/>
+
+                    @* Зона изображений *@
+                    <MudStack Row="true" Spacing="5">
+                        <MudTextField T="string"
+                                      @bind-Value="SelectedImage"
+                                      Label="Ссылка на изображение">
+                        </MudTextField>
+                        <MudFab StartIcon="@Icons.Material.Filled.Add"
+                                Size="Size.Small" Text="Добавить"
+                                DisableElevation="true"
+                                OnClick="AddImage"/>
+                    </MudStack>
+                    <MudGrid>
+                        <MudItem>
+                            @if (Model.Images.Count == 0)
+                            {
+                                <MudText>Изображения не добавлены.</MudText>
+                            }
+                            else
+                            {
+                                @foreach (var option in Model.Images)
+                                {
+                                    <MudChip OnClose="DeleteImage" Value="@option">
+                                        @(option)
+                                    </MudChip>
+                                }
+                            }
+                        </MudItem>
+                    </MudGrid>
+
+                    @* Зона ссылок *@
+                    <MudStack Row="true" Spacing="5">
+                        <MudTextField T="string"
+                                      @bind-Value="SelectedUrl"
+                                      Label="Ссылка">
+                        </MudTextField>
+                        <MudFab StartIcon="@Icons.Material.Filled.Add"
+                                Size="Size.Small" Text="Добавить"
+                                DisableElevation="true"
+                                OnClick="AddUrl"/>
+                    </MudStack>
+                    <MudGrid>
+                        <MudItem>
+                            @if (Model.Urls.Count == 0)
+                            {
+                                <MudText>Ссылки не добавлены.</MudText>
+                            }
+                            else
+                            {
+                                @foreach (var option in Model.Urls)
+                                {
+                                    <MudChip OnClose="DeleteUrl" Value="@option">
+                                        @(option)
+                                    </MudChip>
+                                }
+                            }
+                        </MudItem>
+                    </MudGrid>
                 </MudCardContent>
                 <MudCardActions>
                     <MudFab ButtonType="ButtonType.Submit"
@@ -112,7 +170,7 @@
                                      Label="Тип кнопки"
                                      SearchFunc="@SearchButtonType"
                                      ToStringFunc=@(x => x.GetAttribute<DisplayAttribute, OnboardingBot.Shared.Models.ButtonType>().Name)>
-                        
+
                     </MudAutocomplete>
                 </MudTd>
             </RowEditingTemplate>
@@ -144,6 +202,9 @@
     private ISnackbar Snackbar { get; set; }
 
     public List<OnboardingBot.Shared.Models.ButtonType> ButtonTypes { get; set; } = new(Enum.GetValues<OnboardingBot.Shared.Models.ButtonType>());
+
+    public string? SelectedImage { get; set; } = string.Empty;
+    public string? SelectedUrl { get; set; } = string.Empty;
 
 
     protected override async Task OnInitializedAsync()
@@ -200,6 +261,37 @@
         }
     }
 
+
+    private async Task AddImage()
+    {
+        if (SelectedImage == null)
+        {
+            return;
+        }
+
+        Model.Images.Add(SelectedImage);
+    }
+
+    private void DeleteImage(MudChip obj)
+    {
+        Model.Images.Remove((string)obj.Value);
+    }
+
+
+    private async Task AddUrl()
+    {
+        if (SelectedUrl == null)
+        {
+            return;
+        }
+
+        Model.Urls.Add(SelectedUrl);
+    }
+
+    private void DeleteUrl(MudChip obj)
+    {
+        Model.Urls.Remove((string)obj.Value);
+    }
 
     private ButtonViewModel ButtonBeforeEdit { get; set; }
 
