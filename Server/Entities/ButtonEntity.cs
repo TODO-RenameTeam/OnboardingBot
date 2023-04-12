@@ -13,13 +13,13 @@ public class ButtonEntity
     /// </summary>
     [Key]
     public Guid ID { get; set; }
-    
+
     /// <summary>
     /// Название кнопки.
     /// </summary>
     [Required]
     public string Name { get; set; }
-    
+
     /// <summary>
     /// Значение кнопки.
     /// </summary>
@@ -31,4 +31,6 @@ public class ButtonEntity
     /// Связано с параметром Key.
     /// </summary>
     public ButtonType Type { get; set; } = ButtonType.Command;
+
+    public HashSet<TextCommandEntity>? TextCommands { get; set; } = new();
 }
