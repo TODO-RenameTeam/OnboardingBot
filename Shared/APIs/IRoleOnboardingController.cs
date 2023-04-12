@@ -11,9 +11,6 @@ public interface IRoleOnboardingController
     
     [Get("/api/roleonboarding/{id}")]
     Task<RoleOnboardingViewModel> GetByID(Guid id);
-    
-    [Get("/api/roleonboarding/tg")]
-    Task<RoleOnboardingViewModel> GetByTelegramID(long id);
 
     [Post("/api/roleonboarding")]
     Task<RoleOnboardingViewModel> Create(RoleOnboardingEditModel roleonboarding);

@@ -50,6 +50,24 @@ public class RoleOnboardingController : ControllerBase
 
         return Mapper.Map<RoleOnboardingViewModel>(roleOnboarding);
     }
+    
+    [HttpGet("position/{positionId}")]
+    public async Task<ActionResult<RoleOnboardingViewModel>> GetByPositionID(Guid positionId)
+    {
+        var roleOnboarding = Context.RoleOnboardings
+            .Include(x => x.Position)
+            .Include(x => x.UserSteps)
+            .Include(x => x.Steps)
+            .Include(x => x.StepPositions)
+            .FirstOrDefault(x => x.PositionID == positionId);
+
+        if (roleOnboarding == null)
+        {
+            return NotFound();
+        }
+
+        return Mapper.Map<RoleOnboardingViewModel>(roleOnboarding);
+    }
 
     [HttpPost]
     public async Task<ActionResult<RoleOnboardingViewModel>> Create(RoleOnboardingEditModel roleOnboarding)
@@ -74,7 +92,8 @@ public class RoleOnboardingController : ControllerBase
             var step = await Context.Steps.FindAsync(roleOnboardingStepViewModel.StepID);
             if (step != null)
             {
-                entity.StepPositions.Add(new()
+                entity.StepPositions.Add(new
+                    ()
                 {
                     StepID = step.ID,
                     Step = step,

@@ -43,6 +43,22 @@ public class UserOnboardingController : ControllerBase
 
         return Mapper.Map<UserOnboardingViewModel>(userOnboarding);
     }
+    
+    [HttpGet("user/id/{userId}")]
+    public async Task<ActionResult<List<UserOnboardingViewModel>>> GetByUserID(Guid userId)
+    {
+        var userOnboarding = Context.UserOnboardings.Include(x => x.User)
+            .Include(x => x.RoleOnboarding)
+            .Include(x => x.UserCurrentStep)
+            .Where(x => x.UserID == userId);
+
+        if (userOnboarding == null)
+        {
+            return NotFound();
+        }
+
+        return userOnboarding.Select(x=> Mapper.Map<UserOnboardingViewModel>(x)).ToList();
+    }
 
     [HttpPost]
     public async Task<ActionResult<UserOnboardingViewModel>> Create(UserOnboardingEditModel userOnboarding)

@@ -11,9 +11,6 @@ public interface IPositionController
     
     [Get("/api/position/{id}")]
     Task<PositionViewModel> GetByID(Guid id);
-    
-    [Get("/api/position/tg")]
-    Task<PositionViewModel> GetByTelegramID(long id);
 
     [Post("/api/position")]
     Task<PositionViewModel> Create(PositionEditModel position);
