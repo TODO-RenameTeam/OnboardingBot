@@ -80,11 +80,13 @@ public class TextCommandController : ControllerBase
         Context.Entry(entity).State = EntityState.Modified;
 
         await Context.SaveChangesAsync();
-  
+
+        entity = Context.TextCommands.Include(x => x.Quizes).FirstOrDefault(x => x.ID == id);
+
         foreach (var quizViewModel in textCommand.Quizes)
         {
             var quiz = await Context.Quizes.FindAsync(quizViewModel.ID);
-            if (quiz != null)
+            if (quiz != null && entity.Quizes.FirstOrDefault(x=>x.ID == quiz.ID) == null)
             {
                 entity.Quizes.Add(quiz);
             }

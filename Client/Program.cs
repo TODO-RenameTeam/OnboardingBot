@@ -11,6 +11,7 @@ builder.RootComponents.Add<HeadOutlet>("head::after");
 var uri = new Uri(builder.HostEnvironment.BaseAddress);
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = uri });
 builder.Services.AddMudServices();
+builder.Services.AddMudExtensions();
 
 RefitProvider.AddRefitInterfaces(builder.Services, uri);
 
