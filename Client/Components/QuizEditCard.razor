@@ -107,7 +107,18 @@
 
     private async Task OnValidSumbit()
     {
-        Console.WriteLine("Valid!");
+        if (Model.Options.Count == 0)
+        {
+            Snackbar.Add("Укажите ответы!", Severity.Error);
+            return;
+        }
+
+        if (Model.RightOptionID > Model.Options.Count)
+        {
+            Snackbar.Add("Номер правильного ответа больше количества ответов!", Severity.Error);
+            return;
+        }
+        
         try
         {
             var result = IsEdit
