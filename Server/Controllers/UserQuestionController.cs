@@ -23,7 +23,9 @@ public class UserQuestionController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<UserQuestionViewModel>>> GetAll()
     {
-        var res = Context.UserQuestions.ToList();
+        var res = Context.UserQuestions
+            .Include(x => x.UserQuestion)
+            .ToList();
 
         return res.Select(x => Mapper.Map<UserQuestionViewModel>(x)).ToList();
     }
@@ -31,7 +33,9 @@ public class UserQuestionController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<UserQuestionViewModel>> GetByID(Guid id)
     {
-        var userQuestion = await Context.UserQuestions.FindAsync(id);
+        var userQuestion = Context.UserQuestions
+            .Include(x => x.UserQuestion)
+            .FirstOrDefault(x => x.ID == id);
         if (userQuestion == null)
         {
             return NotFound();
@@ -40,6 +44,21 @@ public class UserQuestionController : ControllerBase
         return Mapper.Map<UserQuestionViewModel>(userQuestion);
     }
 
+    [HttpGet("user/id/{userId}")]
+    public async Task<ActionResult<List<UserQuestionViewModel>>> GetByUserID(Guid userId)
+    {
+        var userQuestion = Context.UserQuestions
+            .Include(x => x.UserQuestion)
+            .Where(x => x.UserQuestionID == userId);
+        if (userQuestion == null)
+        {
+            return NotFound();
+        }
+
+        return userQuestion.Select(x => Mapper.Map<UserQuestionViewModel>(x)).ToList();
+    }
+
+
     [HttpPost]
     public async Task<ActionResult<UserQuestionViewModel>> Create(UserQuestionEditModel userQuestion)
     {
@@ -47,7 +66,7 @@ public class UserQuestionController : ControllerBase
 
         entity.Answer = null;
         entity.DateTimeAnswering = null;
-        
+
         Context.UserQuestions.Add(entity);
         await Context.SaveChangesAsync();
 
@@ -72,7 +91,7 @@ public class UserQuestionController : ControllerBase
         {
             Context.Entry(entity).Property(x => x.DateTimeQuestion).IsModified = false;
         }
-        
+
 
         await Context.SaveChangesAsync();
 

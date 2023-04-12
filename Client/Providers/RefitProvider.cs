@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using OnboardingBot.Shared.APIs;
 using OnboardingBot.Shared;
+using QuestionBot.Shared.APIs;
 using Refit;
 
 namespace OnboardingBot.Client.Providers;
@@ -50,6 +51,12 @@ public class RefitProvider
             .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
 
         services.AddRefitClient<IUserController>(refitSettings)
+            .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
+        
+        services.AddRefitClient<IUserOnboardingController>(refitSettings)
+            .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
+        
+        services.AddRefitClient<IUserQuestionController>(refitSettings)
             .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
     }
 }

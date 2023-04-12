@@ -1,0 +1,216 @@
+@page "/admin/userquestions"
+@using OnboardingBot.Shared.ViewModels
+@using Refit
+@using OnboardingBot.Shared.APIs
+@using OnboardingBot.Shared.Extensions
+@using System.ComponentModel.DataAnnotations
+@using AutoMapper
+@using OnboardingBot.Shared.EditModels
+@using OnboardingBot.Shared.Models
+@using QuestionBot.Shared.APIs
+@using ButtonType = MudBlazor.ButtonType
+
+@layout AdminLayout
+
+<PageTitle>Сотрудники</PageTitle>
+
+<MudGrid>
+    <MudItem>
+        <MudFab DisableElevation="true"
+                StartIcon="@Icons.Material.Filled.ArrowBack"
+                Size="Size.Small"
+                Text="Домой" Href="/admin" Label="Домой"/>
+    </MudItem>
+    <MudItem>
+        <MudText Typo="Typo.h3" GutterBottom="true">Сотрудники</MudText>
+    </MudItem>
+</MudGrid>
+
+<MudPaper>
+    <MudTable Items="@Models">
+        <HeaderContent>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<UserQuestionViewModel, object>(x => x.UserQuestion?.FullName)">Сотрудник</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<UserQuestionViewModel, object>(x => x.Question)">Вопрос</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<UserQuestionViewModel, object>(x => x.Answer)">Ответ</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<UserQuestionViewModel, object>(x => x.DateTimeQuestion)">Дата и время задания вопроса</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<UserQuestionViewModel, object>(x => x.DateTimeAnswering)">Дата и время ответа на вопрос</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                Действия
+            </MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>
+                @(context.UserQuestion?.FullName)
+            </MudTd>
+            <MudTd>
+                @context.Question
+            </MudTd>
+            <MudTd>
+                @if (string.IsNullOrWhiteSpace(context.Answer))
+                {
+                    <MudChip Color="Color.Warning" Size="Size.Small">
+                        Ответ не дан
+                    </MudChip>
+                }
+                else
+                {
+                    @context.Answer
+                }
+            </MudTd>
+            <MudTd>
+                @(context.DateTimeQuestion.ToString("U"))
+            </MudTd>
+            <MudTd>
+                @if (context.DateTimeAnswering == null)
+                {
+                    <MudChip Color="Color.Warning" Size="Size.Small">
+                        Ответ не дан
+                    </MudChip>
+                }
+                else
+                {
+                    @context.DateTimeAnswering.GetValueOrDefault().ToString("U")
+                }
+            </MudTd>
+            <MudTd>
+                <MudButton Size="Size.Small" Color="Color.Warning" OnClick="() => { OverlayUserQuestion = context; OverlayIsVisible = true; }">Изменить</MudButton>
+                <MudButton Size="Size.Small" Color="Color.Error" OnClick="(() => OnDeleteModel(context))">Удалить</MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+<MudOverlay @bind-Visible="@OverlayIsVisible" DarkBackground="true">
+    <MudPaper Class="pa-2">
+        <MudGrid>
+            <MudItem xs="12">
+                <MudFab IconColor="Color.Warning" StartIcon="@Icons.Material.Filled.Close" OnClick="CloseOverlay"></MudFab>
+            </MudItem>
+            <MudItem xs="12">
+                <EditForm Model="@OverlayUserQuestion" OnValidSubmit="OnValidSumbit">
+                    <DataAnnotationsValidator/>
+                    <MudCard>
+                        <MudCardContent>
+                            <MudTextField Label="Ответ" @bind-Value="OverlayUserQuestion.Answer" For="() => OverlayUserQuestion.Answer"/>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudFab ButtonType="ButtonType.Submit"
+                                    Variant="Variant.Filled"
+                                    DisableElevation="true"
+                                    StartIcon="@Icons.Material.Filled.Save"
+                                    Text="Сохранить"
+                                    Color="Color.Primary"/>
+                        </MudCardActions>
+                    </MudCard>
+                </EditForm>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+</MudOverlay>
+
+@code
+{
+    private List<UserQuestionViewModel> Models { get; set; } = new();
+
+    [Inject]
+    private IUserQuestionController ModelController { get; set; }
+
+    [Inject]
+    private IDialogService DialogService { get; set; }
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; }
+
+    [Inject]
+    public IMapper Mapper { get; set; }
+
+
+    private bool OverlayIsVisible { get; set; } = false;
+    public UserQuestionViewModel? OverlayUserQuestion { get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Models = await ModelController.GetAll();
+        }
+        catch (ApiException e)
+        {
+            Console.WriteLine(e);
+    // throw;
+        }
+    }
+
+    private async Task OnDeleteModel(UserQuestionViewModel model)
+    {
+        var result = await DialogService.ShowMessageBox("Подтверждение",
+            $"Вы точно хотите удалить вопрос?", "Да", "Нет");
+
+        if (!result.GetValueOrDefault(false))
+        {
+            return;
+        }
+
+        try
+        {
+            await ModelController.Delete(model.ID);
+            Models = await ModelController.GetAll();
+            Snackbar.Add("Вопрос успешно удалён!", Severity.Success);
+        }
+        catch (ValidationApiException validationException)
+        {
+            Snackbar.Add(validationException.Content.Detail, Severity.Error);
+        }
+    }
+
+    private async Task OnValidSumbit()
+    {
+        if (string.IsNullOrWhiteSpace(OverlayUserQuestion.Answer))
+        {
+            Snackbar.Add("Укажите ответ или закройте окно!", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            OverlayUserQuestion.DateTimeAnswering = DateTime.Now;
+
+            var result = await ModelController.Update(OverlayUserQuestion.ID, Mapper.Map<UserQuestionEditModel>(OverlayUserQuestion));
+
+            Snackbar.Add("Вопрос успешно сохранён");
+            Models = await ModelController.GetAll();
+            OverlayIsVisible = false;
+        }
+        catch (ValidationApiException validationException)
+        {
+            Snackbar.Add(validationException.Content.Detail, Severity.Error);
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(exception.RequestMessage.Content.ToString(), Severity.Error);
+        }
+    }
+    
+    private async Task CloseOverlay()
+    {
+        OverlayIsVisible= false;
+        try
+        {
+            Models = await ModelController.GetAll();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+}
