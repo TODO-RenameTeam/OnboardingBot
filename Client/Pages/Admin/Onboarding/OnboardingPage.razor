@@ -13,7 +13,17 @@
 @page "/admin/onboardings/create"
 @page "/admin/onboardings/{ID:guid}/edit"
 
+<PageTitle>@PageTitle</PageTitle>
+
 <MudGrid>
+    <MudItem>
+        <MudFab DisableElevation="true"
+                StartIcon="@Icons.Material.Filled.ArrowBack"
+                Text="Назад" Href="/admin/positions"/>
+    </MudItem>
+    <MudItem>
+        <MudText Typo="Typo.h3">@PageTitle</MudText>
+    </MudItem>
     <MudItem xs="12">
         <MudStepper @ref="_stepper"
                     PreventStepChangeAsync="new Func<StepChangeDirection, Task<bool>>(CheckChange)" LocalizedStrings="GetLocalizedStrings()">
