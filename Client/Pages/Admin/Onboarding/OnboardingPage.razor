@@ -1,0 +1,321 @@
+﻿@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+@using MudBlazor.Extensions
+@using MudExtensions.Enums
+@using MudExtensions.Utilities
+@using OnboardingBot.Shared.APIs
+@using OnboardingBot.Shared.EditModels
+@using OnboardingBot.Shared.ViewModels
+@using OnboardingBot.Client.Components
+@using Refit
+@using AutoMapper
+
+@page "/admin/onboardings/create"
+@page "/admin/onboardings/{ID:guid}/edit"
+
+<MudGrid>
+    <MudItem xs="12">
+        <MudStepper @ref="_stepper"
+                    PreventStepChangeAsync="new Func<StepChangeDirection, Task<bool>>(CheckChange)" LocalizedStrings="GetLocalizedStrings()">
+            <ChildContent>
+                <MudStep Title="Общая информация" StatusChanged="StatusChanged">
+                    <MudForm @ref="_form">
+                        <MudStack>
+                            <MudAutocomplete @bind-Value="@SelectedPosition"
+                                             Required="true"
+                                             Label="Должность"
+                                             SearchFunc="@SearchPosition"
+                                             ToStringFunc=@(x => x == null ? "" : x.Name)>
+                            </MudAutocomplete>
+                            <MudNumericField
+                                Required="true"
+                                Label="Кол-во шагов"
+                                @bind-Value="@Model.StepsCount"
+                                For="() => Model.StepsCount"/>
+                        </MudStack>
+                    </MudForm>
+                </MudStep>
+                <MudStep Title="Шаги">
+                    @* Зона шагов *@
+                    <MudStack Row="true" Spacing="5">
+                        <MudAutocomplete @bind-Value="@SelectedStep"
+                                         Label="Добавление шага"
+                                         SearchFunc="@SearchStep"
+                                         ToStringFunc=@(x => x == null ? "" : x.Name)>
+                        </MudAutocomplete>
+                        <MudFab StartIcon="@Icons.Material.Filled.Add"
+                                Size="Size.Small"
+                                DisableElevation="true"
+                                OnClick="AddStep"/>
+
+                        <MudFab StartIcon="@Icons.Material.Filled.Create"
+                                Size="Size.Small"
+                                Label="Создать"
+                                DisableElevation="true"
+                                OnClick="CreateStep"/>
+                    </MudStack>
+                    <MudTable Items="@Model.StepPositions" Dense="true">
+                        <ToolBarContent>
+                            <MudText Typo="Typo.h6">Шаги</MudText>
+                            <MudSpacer/>
+                        </ToolBarContent>
+                        <HeaderContent>
+                            <MudTh>
+                                <MudTableSortLabel SortBy="new Func<RoleOnboardingStepViewModel, object>(x => x.Position)">Позиция</MudTableSortLabel>
+                            </MudTh>
+                            <MudTh>
+                                <MudTableSortLabel SortBy="new Func<RoleOnboardingStepViewModel, object>(x => x.Step.Name)">Название</MudTableSortLabel>
+                            </MudTh>
+                            <MudTh>
+                                Действие
+                            </MudTh>
+                        </HeaderContent>
+                        <RowTemplate Context="quiz">
+                            <MudTd DataLabel="Позиция">@quiz.Position</MudTd>
+                            <MudTd DataLabel="Название">@quiz.Step.Name</MudTd>
+                            <MudTd DataLabel="Действие">
+                                <MudFab Text="Удалить" Label="Удалить"
+                                        Size="Size.Small"
+                                        Color="Color.Error"
+                                        StartIcon="@Icons.Material.Filled.Delete"
+                                        OnClick="() => RemoveStep(quiz)"
+                                        DisableElevation="true"/>
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                </MudStep>
+                <MudStep Title="Проверка" StatusChanged="FinishStatusChanged">
+                    <MudForm @ref="_form2">
+                        <MudStack>
+                            <MudTextField T="string" Label="Card Number" Required="true"/>
+                            <MudStack Row="true">
+                                <MudTextField T="string" Label="Expire Date" Required="true"/>
+                                <MudTextField T="string" Label="CVC" Required="true"/>
+                            </MudStack>
+                        </MudStack>
+                    </MudForm>
+                </MudStep>
+                <MudStep Title="Result Step" IsResultStep="true">
+                    <div class="d-flex flex-column align-center justify-center" style="height: 200px">
+                        <MudIconButton Icon="@Icons.Material.Filled.DoneAll" Size="Size.Large" Variant="Variant.Filled" Color="Color.Success"/>
+                        <MudText>Your reservation succesfully completed.</MudText>
+                    </div>
+                </MudStep>
+            </ChildContent>
+            <ActionContent>
+                @if (!_stepper.IsAllStepsCompleted())
+                {
+                    <MudButton Color="Color.Secondary" OnClick="@(() => Snackbar.Add("Custom cancel button clicked.", Severity.Info))">Cancel</MudButton>
+                }
+                <MudSpacer/>
+            </ActionContent>
+        </MudStepper>
+    </MudItem>
+</MudGrid>
+
+<MudOverlay @bind-Visible="OverlayVisible" DarkBackground="true">
+    <MudGrid>
+        <MudItem xs="12">
+            <MudFab IconColor="Color.Warning" StartIcon="@Icons.Material.Filled.Close" OnClick="CloseOverlay"></MudFab>
+        </MudItem>
+        <MudItem>
+            <StepEditCard UseNavigations="false"/>
+        </MudItem>
+    </MudGrid>
+</MudOverlay>
+
+@code {
+
+    [Parameter]
+    public Guid? ID { get; set; } = null!;
+
+    public bool IsEdit => ID != null;
+
+    public string PageTitle => IsEdit ? "Изменение онбоардинга" : "Создание онбоардинга";
+
+    MudStepper _stepper;
+    MudForm _form;
+    MudForm _form2;
+
+    public bool OverlayVisible { get; set; } = false;
+
+    [Inject]
+    public IRoleOnboardingController ModelController { get; set; }
+
+    [Inject]
+    public IPositionController PositionController { get; set; }
+
+    [Inject]
+    public IStepController StepController { get; set; }
+
+    [Inject]
+    public IMapper Mapper { get; set; }
+
+    public RoleOnboardingEditModel Model { get; set; } = new();
+    public List<PositionViewModel> Positions { get; set; } = new();
+    public List<StepViewModel> Steps { get; set; } = new();
+
+    public PositionViewModel SelectedPosition { get; set; }
+    public StepViewModel SelectedStep { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Positions = await PositionController.GetAll();
+            Steps = await StepController.GetAll();
+
+            if (IsEdit)
+            {
+                Model = Mapper.Map<RoleOnboardingEditModel>(await ModelController.GetByID(ID.GetValueOrDefault()));
+                SelectedPosition = Positions.FirstOrDefault(x => x.ID == Model.PositionID);
+            }
+        }
+        catch (ApiException e)
+        {
+            Console.WriteLine(e);
+    // throw;
+        }
+    }
+
+    /// <summary>
+    /// Handler before update to new position.
+    /// </summary>
+    /// <param name="direction"></param>
+    /// <returns></returns>
+    private async Task<bool> CheckChange(StepChangeDirection direction)
+    {
+        if (direction == StepChangeDirection.Backward)
+        {
+            return false;
+        }
+        if (_stepper.GetActiveIndex() == 0)
+        {
+            await _form.Validate();
+            StateHasChanged();
+            return !_form.IsValid;
+        }
+        else if (_stepper.GetActiveIndex() == 2)
+        {
+            await _form2.Validate();
+            StateHasChanged();
+            return !_form2.IsValid;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    private void StatusChanged(StepStatus status)
+    {
+        Snackbar.Add($"First step {status.ToDescriptionString()}.", Severity.Info);
+    }
+
+    private StepperLocalizedStrings GetLocalizedStrings()
+    {
+        return new StepperLocalizedStrings()
+        {
+            Completed = "Завершено",
+            Finish = "Финиш",
+            Next = "Следующий",
+            Optional = "Не обязательно",
+            Previous = "Предыдущий",
+            Skip = "Пропустить",
+            Skipped = "Пропущено"
+        };
+    }
+
+    private async Task<IEnumerable<PositionViewModel>> SearchPosition(string arg)
+    {
+        if (string.IsNullOrWhiteSpace(arg))
+        {
+            return Positions;
+        }
+
+        return Positions.Where(x =>
+            x.Name
+                .Contains(arg, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private async Task<IEnumerable<StepViewModel>> SearchStep(string arg)
+    {
+        if (string.IsNullOrWhiteSpace(arg))
+        {
+            return Steps;
+        }
+
+        return Steps.Where(x =>
+            x.Name
+                .Contains(arg, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private async Task CreateStep()
+    {
+        OverlayVisible = true;
+    }
+
+    private async Task CloseOverlay()
+    {
+        OverlayVisible = false;
+        try
+        {
+            Steps = await StepController.GetAll();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+
+    private async Task OnValidSumbit()
+    {
+        Model.PositionID = SelectedPosition?.ID ?? Guid.Empty;
+        try
+        {
+            var result = IsEdit
+                ? await ModelController.Update(ID.GetValueOrDefault(), Model)
+                : await ModelController.Create(Model);
+
+            Model = Mapper.Map<RoleOnboardingEditModel>(result);
+            NavigationManager.NavigateTo($"/admin/onboardings/{result.ID}/edit");
+            Snackbar.Add("Онбоардинг успешно сохранён!");
+        }
+        catch (ValidationApiException validationException)
+        {
+            Snackbar.Add(validationException.Content.Detail, Severity.Error);
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(exception.RequestMessage.Content.ToString(), Severity.Error);
+        }
+    }
+
+    private void AddStep()
+    {
+        Model.Steps.Add(SelectedStep);
+        Model.StepPositions.Add(new()
+        {
+            Step = SelectedStep,
+            StepID = SelectedStep.ID,
+            Position = Model.StepPositions.MaxBy(x => x.Position)?.Position + 1 ?? 1
+        });
+        StateHasChanged();
+    }
+
+    private void RemoveStep(RoleOnboardingStepViewModel button)
+    {
+        Model.Steps.Remove(button.Step);
+        Model.StepPositions.Remove(button);
+    }
+
+    private void FinishStatusChanged(StepStatus status)
+    {
+    // Log.Warning("Final in finish status!");
+        if (status == StepStatus.Completed)
+        {
+            OnValidSumbit();
+        }
+    }
+
+}

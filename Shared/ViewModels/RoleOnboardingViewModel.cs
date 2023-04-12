@@ -10,7 +10,7 @@ public class RoleOnboardingViewModel
     public HashSet<UserOnboardingViewModel>? UserSteps { get; set; } = new();
 
     public HashSet<StepViewModel>? Steps { get; set; } = new();
-    public HashSet<RoleOnboardingViewModel>? StepPositions { get; set; } = new();
+    public HashSet<RoleOnboardingStepViewModel>? StepPositions { get; set; } = new();
 }
 
 public class RoleOnboardingStepViewModel

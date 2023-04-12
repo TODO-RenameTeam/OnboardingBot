@@ -30,6 +30,10 @@ public class RefitProvider
         };
 
         var apiUrl = url;
+        
+        services.AddRefitClient<IRoleOnboardingController>(refitSettings)
+            .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
+        
         services.AddRefitClient<IPositionController>(refitSettings)
             .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
         
