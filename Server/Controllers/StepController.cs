@@ -80,10 +80,13 @@ public class StepController : ControllerBase
 
         await Context.SaveChangesAsync();
         
+        entity = Context.Steps.Include(x => x.Quizes)
+            .FirstOrDefault(x => x.ID == id);
+
         foreach (var quizViewModel in step.Quizes)
         {
             var quiz = await Context.Quizes.FindAsync(quizViewModel.ID);
-            if (quiz != null)
+            if (quiz != null && entity.Quizes.FirstOrDefault(x=>x.ID == quiz.ID) == null)
             {
                 entity.Quizes.Add(quiz);
             }

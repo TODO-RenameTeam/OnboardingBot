@@ -78,21 +78,38 @@ public class TextCommandController : ControllerBase
 
         entity.ID = id;
         entity.Quizes.Clear();
+        entity.Buttons.Clear();
 
         Context.Attach(entity);
         Context.Entry(entity).State = EntityState.Modified;
 
         await Context.SaveChangesAsync();
 
-        entity = Context.TextCommands.Include(x => x.Quizes)
+        entity = Context.TextCommands
+            .Include(x => x.Quizes)
+            .Include(x=>x.Buttons)
             .FirstOrDefault(x => x.ID == id);
+
+        entity.Quizes.Clear();
+        entity.Buttons.Clear();
+        
+        await Context.SaveChangesAsync();
 
         foreach (var quizViewModel in textCommand.Quizes)
         {
             var quiz = await Context.Quizes.FindAsync(quizViewModel.ID);
-            if (quiz != null && entity.Quizes.FirstOrDefault(x=>x.ID == quiz.ID) == null)
+            if (quiz != null)
             {
                 entity.Quizes.Add(quiz);
+            }
+        }
+        
+        foreach (var button in textCommand.Buttons)
+        {
+            var buttonEnt = await Context.Buttons.FindAsync(button.ID);
+            if (buttonEnt != null)
+            {
+                entity.Buttons.Add(buttonEnt);
             }
         }
 
