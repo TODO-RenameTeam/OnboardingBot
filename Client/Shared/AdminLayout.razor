@@ -1,20 +1,21 @@
 ﻿@inherits LayoutComponentBase
 
-<MudThemeProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
+<MudThemeProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
 
 <MudLayout>
     <MudAppBar Elevation="0">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        <MudSpacer />
-        <MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" Link="https://github.com/TODO-RenameTeam/OnboardingBot" Target="_blank" />
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())"/>
+        <MudText Typo="Typo.h6">Панель администратора</MudText>
+        <MudSpacer/>
+        <MudIconButton Icon="@Icons.Custom.Brands.GitHub" Color="Color.Inherit" Link="https://github.com/TODO-RenameTeam/OnboardingBot" Target="_blank"/>
     </MudAppBar>
     <MudDrawer @bind-Open="_drawerOpen" Elevation="1">
         <MudDrawerHeader>
-            <MudText Typo="Typo.h6">Панель администратора</MudText>
+            <MudText Typo="Typo.h6">Rename team</MudText>
         </MudDrawerHeader>
-        <AdminNavMenu />
+        <AdminNavMenu/>
     </MudDrawer>
     <MudMainContent>
         <MudContainer MaxWidth="MaxWidth.Large" Class="my-16 pt-16">
@@ -30,4 +31,5 @@
     {
         _drawerOpen = !_drawerOpen;
     }
+
 }

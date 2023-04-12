@@ -67,11 +67,13 @@
                 @(context.Role.GetAttribute<DisplayAttribute, UserRole>().Name)
             </MudTd>
             <MudTd>
-                @(context.TelegramID == null ? "Не привязан к ТГ" : "Привязан к ТГ")
+                <MudChip Color="@(context.TelegramID == null? Color.Error : Color.Success)" Size="Size.Small">
+                     @(context.TelegramID == null ? "Не привязан к ТГ" : "Привязан к ТГ")
+                </MudChip>
             </MudTd>
             <MudTd>
                 <MudButton Size="Size.Small" Color="Color.Warning" Href="@($"/admin/users/{context.ID}/edit")">Изменить</MudButton>
-                <MudButton Size="Size.Small" Color="Color.Warning" OnClick="(() => OnGenerateCode(context))">
+                <MudButton Size="Size.Small" Color="Color.Success" OnClick="(() => OnGenerateCode(context))">
                     @(context.TelegramID == null ? "Привязать ТГ" : "Перепривязать ТГ")
                 </MudButton>
                 <MudButton Size="Size.Small" Color="Color.Error" OnClick="(() => OnDeleteModel(context))">Удалить</MudButton>

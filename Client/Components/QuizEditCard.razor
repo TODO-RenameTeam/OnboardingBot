@@ -8,59 +8,54 @@
 
 <PageTitle>@PageTitle</PageTitle>
 
-<MudGrid>
-    <MudItem xs="12">
-        <EditForm Model="@Model" OnValidSubmit="OnValidSumbit">
-            <DataAnnotationsValidator/>
-            <MudCard>
-                <MudCardContent>
-                    <MudTextField Label="Название" @bind-Value="Model.Name" For="() => Model.Name"/>
-                    <MudTextField Label="Текст" @bind-Value="Model.Text"
-                                  For="() => Model.Text"/>
-                    @* Зона ответов *@
-                    <MudStack Row="true" Spacing="5">
-                        <MudTextField T="string"
-                                      @bind-Value="SelectedOption"
-                                      Label="Ответ">
-                        </MudTextField>
-                        <MudFab StartIcon="@Icons.Material.Filled.Add"
-                                Size="Size.Small" Text="Добавить"
-                                DisableElevation="true"
-                                OnClick="AddOption"/>
-                    </MudStack>
-                    <MudGrid>
-                        <MudItem>
-                            @if (Model.Options.Count == 0)
-                            {
-                                <MudText>Ответы не добавлены.</MudText>
-                            }
-                            else
-                            {
-                                @foreach (var option in Model.Options)
-                                {
-                                    <MudChip OnClose="DeleteOption" Value="@option">
-                                        @(option)
-                                    </MudChip>
-                                }
-                            }
-                        </MudItem>
-                    </MudGrid>
-                    <MudNumericField T="int" @bind-Value="Model.RightOptionID"
-                                     For="() => Model.RightOptionID"
-                                     Label="Номер правильного ответа"/>
-                </MudCardContent>
-                <MudCardActions>
-                    <MudFab QuizType="QuizType.Submit"
-                            Variant="Variant.Filled"
-                            DisableElevation="true"
-                            StartIcon="@Icons.Material.Filled.Save"
-                            Text="Сохранить"
-                            Color="Color.Primary"/>
-                </MudCardActions>
-            </MudCard>
-        </EditForm>
-    </MudItem>
-</MudGrid>
+<EditForm Model="@Model" OnValidSubmit="OnValidSumbit">
+    <DataAnnotationsValidator/>
+    <MudCard>
+        <MudCardContent>
+            <MudTextField Label="Название" @bind-Value="Model.Name" For="() => Model.Name"/>
+            <MudTextField Label="Текст" @bind-Value="Model.Text" For="() => Model.Text"/>
+            @* Зона ответов *@
+            <MudStack Row="true" Spacing="5">
+                <MudTextField T="string"
+                              @bind-Value="SelectedOption"
+                              Label="Ответ">
+                </MudTextField>
+                <MudFab StartIcon="@Icons.Material.Filled.Add"
+                        Size="Size.Small" Text="Добавить"
+                        DisableElevation="true"
+                        OnClick="AddOption"/>
+            </MudStack>
+            <MudGrid>
+                <MudItem>
+                    @if (Model.Options.Count == 0)
+                    {
+                        <MudText>Ответы не добавлены.</MudText>
+                    }
+                    else
+                    {
+                        @foreach (var option in Model.Options)
+                        {
+                            <MudChip OnClose="DeleteOption" Value="@option">
+                                @(option)
+                            </MudChip>
+                        }
+                    }
+                </MudItem>
+            </MudGrid>
+            <MudNumericField T="int" @bind-Value="Model.RightOptionID"
+                             For="() => Model.RightOptionID"
+                             Label="Номер правильного ответа"/>
+        </MudCardContent>
+        <MudCardActions>
+            <MudFab ButtonType="ButtonType.Submit"
+                    Variant="Variant.Filled"
+                    DisableElevation="true"
+                    StartIcon="@Icons.Material.Filled.Save"
+                    Text="Сохранить"
+                    Color="Color.Primary"/>
+        </MudCardActions>
+    </MudCard>
+</EditForm>
 
 @code
 {
@@ -68,7 +63,7 @@
     public bool UseNavigations { get; set; } = false;
 
     [Parameter]
-    public Guid? ID { get; set; }
+    public Guid? ID { get; set; } = null!;
 
     public bool IsEdit => ID != null;
 
@@ -122,7 +117,7 @@
             Model = Mapper.Map<QuizEditModel>(result);
             if (UseNavigations)
             {
-                NavigationManager.NavigateTo($"/admin/textcommands/{result.ID}/edit");
+                NavigationManager.NavigateTo($"/admin/quizs/{result.ID}/edit");
             }
             Snackbar.Add("Квиз успешно сохранён!");
         }

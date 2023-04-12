@@ -9,6 +9,6 @@ public class QuizEditModel
 
     [Required]
     public string Text { get; set; }
-    public List<string> Options { get; set; } = new();
-    public int RightOptionID { get; set; }
+    public List<string>? Options { get; set; } = new();
+    public int RightOptionID { get; set; } = 0;
 }
