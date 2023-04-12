@@ -89,7 +89,7 @@
         </EditForm>
     </MudItem>
 
-    <MudItem xs="12" sm="6">
+    <MudItem xs="12" md="6">
         @* Зона квизов *@
         <MudStack Row="true" Spacing="5">
             <MudAutocomplete @bind-Value="@SelectedQuiz"
@@ -101,6 +101,12 @@
                     Size="Size.Small"
                     DisableElevation="true"
                     OnClick="AddQuiz"/>
+
+            <MudFab StartIcon="@Icons.Material.Filled.Create"
+                    Size="Size.Small"
+                    Label="Создать"
+                    DisableElevation="true"
+                    OnClick="CreateQuiz"/>
         </MudStack>
         <MudTable Items="@Model.Quizes" Dense="true">
             <ToolBarContent>
@@ -129,6 +135,17 @@
         </MudTable>
     </MudItem>
 </MudGrid>
+
+<MudOverlay @bind-Visible="OverlayVisible" DarkBackground="true">
+    <MudGrid>
+        <MudItem xs="12">
+            <MudFab IconColor="Color.Warning" StartIcon="@Icons.Material.Filled.Close" OnClick="CloseOverlay"></MudFab>
+        </MudItem>
+        <MudItem>
+            <QuizEditCard UseNavigations="false"/>
+        </MudItem>
+    </MudGrid>
+</MudOverlay>
 
 @code
 {
@@ -164,6 +181,8 @@
     public string? SelectedImage { get; set; } = string.Empty;
     public string? SelectedUrl { get; set; } = string.Empty;
     public QuizViewModel? SelectedQuiz { get; set; }
+
+    public bool OverlayVisible { get; set; } = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -264,5 +283,23 @@
     private void DeleteUrl(MudChip obj)
     {
         Model.Urls.Remove((string)obj.Value);
+    }
+
+    private async Task CreateQuiz()
+    {
+        OverlayVisible = true;
+    }
+
+    private async Task CloseOverlay()
+    {
+        OverlayVisible = false;
+        try
+        {
+            Quizes = await QuizController.GetAll();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
     }
 }
