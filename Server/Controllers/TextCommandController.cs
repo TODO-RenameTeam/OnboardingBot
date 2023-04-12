@@ -25,7 +25,8 @@ public class TextCommandController : ControllerBase
     {
         var res = Context.TextCommands.Include(x=>x.Buttons)
             .Include(x=>x.Position)
-            .Include(x => x.Quizes).ToList();
+            .Include(x => x.Quizes)
+            .ToList();
 
         return res.Select(x => Mapper.Map<TextCommandViewModel>(x)).ToList();
     }
@@ -35,6 +36,8 @@ public class TextCommandController : ControllerBase
     {
         var textCommand = Context.TextCommands
             .Include(x => x.Buttons)
+            .Include(x=>x.Position)
+            .Include(x => x.Quizes)
             .FirstOrDefault(x => x.ID == id);
 
         if (textCommand == null)
@@ -81,7 +84,8 @@ public class TextCommandController : ControllerBase
 
         await Context.SaveChangesAsync();
 
-        entity = Context.TextCommands.Include(x => x.Quizes).FirstOrDefault(x => x.ID == id);
+        entity = Context.TextCommands.Include(x => x.Quizes)
+            .FirstOrDefault(x => x.ID == id);
 
         foreach (var quizViewModel in textCommand.Quizes)
         {

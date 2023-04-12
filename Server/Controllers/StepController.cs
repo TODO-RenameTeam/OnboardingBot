@@ -23,7 +23,8 @@ public class StepController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<StepViewModel>>> GetAll()
     {
-        var res = Context.Steps.ToList();
+        var res = Context.Steps.Include(x => x.Position)
+            .Include(x=>x.Quizes).ToList();
 
         return res.Select(x => Mapper.Map<StepViewModel>(x)).ToList();
     }

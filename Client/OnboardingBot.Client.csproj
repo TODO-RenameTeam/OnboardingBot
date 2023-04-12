@@ -27,8 +27,4 @@
 	  <AdditionalFiles Include="Pages\Admin\Positions\PositionsPage.razor" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="Pages\Admin\Onboarding\" />
-	</ItemGroup>
-
 </Project>
