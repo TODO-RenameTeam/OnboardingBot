@@ -19,5 +19,6 @@ public class Mappings : Profile
         CreateMap<TextCommandViewModel, TextCommandEditModel>().ReverseMap();
         CreateMap<UserViewModel, UserEditModel>().ReverseMap();
         CreateMap<UserOnboardingViewModel, UserOnboardingEditModel>().ReverseMap();
+        CreateMap<UserQuestionViewModel, UserQuestionEditModel>().ReverseMap();
     }
 }

@@ -64,6 +64,8 @@ public class TelegramCodeController : ControllerBase
         {
             return NotFound();
         }
+
+        user.TelegramID = null;
         
         var res = Context.TelegramCodes.FirstOrDefault(x => x.UserID == userId);
         if (res == null)

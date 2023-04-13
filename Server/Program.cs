@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using OnboardingBot.Server;
 using OnboardingBot.Server.Services;
+using OnboardingBot.Shared.APIs.Bot;
 using Refit;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -47,6 +48,24 @@ serializerOptions.Converters.Add(new ObjectToInferredTypesConverter());
 serializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false));
 
 var serializer = new SystemTextJsonContentSerializer(serializerOptions);
+
+var botUrlStr = Environment.GetEnvironmentVariable("BOT_URL");
+if (string.IsNullOrWhiteSpace(botUrlStr))
+{
+    Console.WriteLine("ERROR! LINK TO BOT NOT SETTED!");
+}
+else
+{
+    var botUrl = new Uri(botUrlStr);
+
+    var refitSettings = new RefitSettings()
+    {
+        ContentSerializer = serializer
+    };
+
+    builder.Services.AddRefitClient<ITelegramBotInterface>(refitSettings)
+        .ConfigureHttpClient(c => c.BaseAddress = botUrl);
+}
 
 var app = builder.Build();
 

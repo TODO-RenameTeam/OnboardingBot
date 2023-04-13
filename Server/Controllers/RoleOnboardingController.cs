@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OnboardingBot.Server.Entities;
+using OnboardingBot.Shared.APIs.Bot;
 using OnboardingBot.Shared.EditModels;
 using OnboardingBot.Shared.ViewModels;
 
@@ -23,7 +24,12 @@ public class RoleOnboardingController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<RoleOnboardingViewModel>>> GetAll()
     {
-        var res = Context.RoleOnboardings.ToList();
+        var res = Context.RoleOnboardings
+            .Include(x => x.Position)
+            .Include(x => x.UserSteps)
+            .Include(x => x.Steps)
+            .Include(x => x.StepPositions)
+            .ToList();
 
         return res.Select(x => Mapper.Map<RoleOnboardingViewModel>(x)).ToList();
     }
@@ -31,9 +37,30 @@ public class RoleOnboardingController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<RoleOnboardingViewModel>> GetByID(Guid id)
     {
-        var roleOnboarding = Context.RoleOnboardings.Include(x => x.Position)
+        var roleOnboarding = Context.RoleOnboardings
+            .Include(x => x.Position)
+            .Include(x => x.UserSteps)
             .Include(x => x.Steps)
+            .Include(x => x.StepPositions)
             .FirstOrDefault(x => x.ID == id);
+
+        if (roleOnboarding == null)
+        {
+            return NotFound();
+        }
+
+        return Mapper.Map<RoleOnboardingViewModel>(roleOnboarding);
+    }
+    
+    [HttpGet("position/{positionId}")]
+    public async Task<ActionResult<RoleOnboardingViewModel>> GetByPositionID(Guid positionId)
+    {
+        var roleOnboarding = Context.RoleOnboardings
+            .Include(x => x.Position)
+            .Include(x => x.UserSteps)
+            .Include(x => x.Steps)
+            .Include(x => x.StepPositions)
+            .FirstOrDefault(x => x.PositionID == positionId);
 
         if (roleOnboarding == null)
         {
@@ -48,7 +75,34 @@ public class RoleOnboardingController : ControllerBase
     {
         var entity = Mapper.Map<RoleOnboardingEntity>(roleOnboarding);
 
+        var position = await Context.Positions.FindAsync(roleOnboarding.PositionID);
+        if (position == null)
+        {
+            return BadRequest();
+        }
+
+        entity.UserSteps.Clear();
+        entity.StepPositions.Clear();
+        entity.Steps.Clear();
+
         Context.RoleOnboardings.Add(entity);
+        await Context.SaveChangesAsync();
+
+        foreach (var roleOnboardingStepViewModel in roleOnboarding.StepPositions)
+        {
+            var step = await Context.Steps.FindAsync(roleOnboardingStepViewModel.StepID);
+            if (step != null)
+            {
+                entity.StepPositions.Add(new
+                    ()
+                {
+                    StepID = step.ID,
+                    Step = step,
+                    Position = roleOnboardingStepViewModel.Position
+                });
+            }
+        }
+
         await Context.SaveChangesAsync();
 
         return await GetByID(entity.ID);
@@ -58,12 +112,49 @@ public class RoleOnboardingController : ControllerBase
     public async Task<ActionResult<RoleOnboardingViewModel>> Update(Guid id, RoleOnboardingEntity roleOnboarding)
     {
         var entity = Mapper.Map<RoleOnboardingEntity>(roleOnboarding);
+        entity.UserSteps.Clear();
+        entity.StepPositions.Clear();
+        entity.Steps.Clear();
+
+        var position = Context.Positions.FirstOrDefault(x => x.ID == roleOnboarding.PositionID);
+        if (position == null)
+        {
+            return BadRequest();
+        }
+
+        entity.Position = position;
 
         entity.ID = id;
 
         Context.Attach(entity);
         Context.Entry(entity).State = EntityState.Modified;
 
+        await Context.SaveChangesAsync();
+
+        entity = Context.RoleOnboardings
+            .Include(x => x.StepPositions)
+            .Include(x => x.Steps)
+            .FirstOrDefault(x => x.ID == id)!;
+        entity.StepPositions.Clear();
+        entity.Steps.Clear();
+
+        await Context.SaveChangesAsync();
+
+        foreach (var roleOnboardingStepViewModel in roleOnboarding.StepPositions)
+        {
+            var step = await Context.Steps.FindAsync(roleOnboardingStepViewModel.StepID);
+            if (step != null)
+            {
+                entity.StepPositions.Add(new()
+                {
+                    StepID = step.ID,
+                    Step = step,
+                    Position = roleOnboardingStepViewModel.Position,
+                    RoleOnboardingID = entity.ID
+                });
+            }
+        }
+        
         await Context.SaveChangesAsync();
 
         return await GetByID(entity.ID);

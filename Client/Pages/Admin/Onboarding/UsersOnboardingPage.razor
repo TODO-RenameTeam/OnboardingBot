@@ -1,0 +1,140 @@
+﻿@inject ISnackbar Snackbar
+@inject NavigationManager NavigationManager
+@using OnboardingBot.Shared.APIs
+@using OnboardingBot.Shared.ViewModels
+@using Refit
+@using AutoMapper
+
+@page "/admin/onboardings/{ID:guid}/users"
+
+<PageTitle>@PageTitle</PageTitle>
+
+<MudGrid>
+    <MudItem>
+        <MudFab DisableElevation="true"
+                StartIcon="@Icons.Material.Filled.ArrowBack"
+                Text="Назад" Href="/admin/onboardings"/>
+    </MudItem>
+    <MudItem>
+        <MudText Typo="Typo.h3">@PageTitle</MudText>
+    </MudItem>
+    <MudItem xs="12">
+            <MudText Typo="Typo.h5">Онбоардинг для должности @Model?.Position?.Name</MudText>
+        </MudItem>
+    <MudItem xs="12">
+        <MudTable Items="@UserOnboardings">
+            <HeaderContent>
+                <MudTh>
+                    <MudTableSortLabel SortBy="new Func<UserOnboardingViewModel, object>(x => x.User.FullName)">Сотрудник</MudTableSortLabel>
+                </MudTh>
+                <MudTh>
+                    <MudTableSortLabel SortBy="new Func<UserOnboardingViewModel, object>(x => x.UserCurrentStep.Name)">Текущий шаг</MudTableSortLabel>
+                </MudTh>
+                <MudTh>
+                    <MudTableSortLabel SortBy="new Func<UserOnboardingViewModel, object>(x => x.DateTimeStart)">Дата и время начала</MudTableSortLabel>
+                </MudTh>
+                <MudTh>
+                    <MudTableSortLabel SortBy="new Func<UserOnboardingViewModel, object>(x => x.DateTimeEnd)">Дата и время окончания</MudTableSortLabel>
+                </MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd>
+                    @(context.User.FullName)
+                </MudTd>
+                <MudTd>
+                    @($"{context.UserCurrentStep.Name}")
+                </MudTd>
+                <MudTd>
+                    @(context.DateTimeStart.ToString("U"))
+                </MudTd>
+                <MudTd>
+                    @if (context.DateTimeEnd == null)
+                    {
+                        <MudChip Color="Color.Warning" Size="Size.Small">Не закончено прохождение</MudChip>
+                    }
+                    else
+                    {
+                        @(context.DateTimeEnd.GetValueOrDefault().ToString("U"))
+                    }
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudItem>
+    <MudItem xs="12" md="4">
+        <MudPaper Class="pa-3">
+            <MudText Typo="Typo.h6">
+                Незакончили проходить:
+            </MudText>
+            <MudText Typo="Typo.h3">
+                @(Users.Count(x=>x.PositionID == Model.PositionID) - UserOnboardings.Count(x => x.UserCurrentStepID ==
+                                                           Model.StepPositions!.MaxBy(x => x.Position)?.StepID))
+            </MudText>
+        </MudPaper>
+
+    </MudItem>
+    <MudItem xs="12" md="4">
+        <MudPaper Class="pa-3">
+            <MudText Typo="Typo.h6">
+                Самое быстрое прохождение за:
+            </MudText>
+            <MudText Typo="Typo.h3">
+                0
+            </MudText>
+        </MudPaper>
+
+    </MudItem>
+</MudGrid>
+
+@code {
+
+    [Parameter]
+    public Guid ID { get; set; }
+
+    public string PageTitle = "Информация о онбоардинге";
+
+    [Inject]
+    public IRoleOnboardingController ModelController { get; set; }
+
+    [Inject]
+    public IUserOnboardingController UserOnboardingController { get; set; }
+
+    [Inject]
+    public IUserController UserController { get; set; }
+
+    [Inject]
+    public IStepController StepController { get; set; }
+
+    [Inject]
+    public IMapper Mapper { get; set; }
+
+    public RoleOnboardingViewModel Model { get; set; } = new();
+    public List<UserOnboardingViewModel> UserOnboardings { get; set; } = new();
+    public List<StepViewModel> Steps { get; set; } = new();
+    public List<UserViewModel> Users { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Model = await ModelController.GetByID(ID);
+            UserOnboardings = await UserOnboardingController.GetAll();
+            UserOnboardings = UserOnboardings.Where(x => x.RoleOnboardingID == Model.ID).ToList();
+            Steps = await StepController.GetAll();
+            Steps = Steps.Where(x => Model.Steps.FirstOrDefault(xx => xx.ID == x.ID) != null).ToList();
+
+            Users = await UserController.GetAll();
+
+            Users = Users.Where(x => x.PositionID == Model.PositionID).ToList();
+        }
+        catch (ApiException e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+
+    private async Task<string> GetFast()
+    {
+        return string.Empty;
+    }
+
+}

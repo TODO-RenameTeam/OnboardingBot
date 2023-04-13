@@ -2,7 +2,8 @@
 @using OnboardingBot.Shared.ViewModels
 @using Refit
 @using OnboardingBot.Shared.APIs
-@using OnboardingBot.Shared.EditModels
+
+@layout AdminLayout
 
 <PageTitle>Текстовые комманды</PageTitle>
 
@@ -10,6 +11,7 @@
     <MudItem>
         <MudFab DisableElevation="true"
                 StartIcon="@Icons.Material.Filled.ArrowBack"
+                Size="Size.Small"
                 Text="Домой" Href="/admin" Label="Домой"/>
     </MudItem>
     <MudItem>
@@ -53,7 +55,6 @@
                 @context.QuizesCount
             </MudTd>
             <MudTd>
-                @* <MudButton Size="Size.Small" Color="Color.Success" Href="@($"/admin/textcommands/{context.ID}/info")">Инфо</MudButton> *@
                 <MudButton Size="Size.Small" Color="Color.Warning" Href="@($"/admin/textcommands/{context.ID}/edit")">Изменить</MudButton>
                 <MudButton Size="Size.Small" Color="Color.Error" OnClick="(() => OnDeleteModel(context))">Удалить</MudButton>
             </MudTd>

@@ -1,0 +1,305 @@
+﻿@using Refit
+@using AutoMapper
+@using OnboardingBot.Shared.APIs
+@using OnboardingBot.Shared.EditModels
+@using OnboardingBot.Shared.ViewModels
+
+<PageTitle>@PageTitle</PageTitle>
+
+<MudGrid>
+    <MudItem xs="12">
+        <EditForm Model="@Model" OnValidSubmit="OnValidSumbit">
+            <DataAnnotationsValidator/>
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField Label="Название" @bind-Value="Model.Name" For="() => Model.Name"/>
+                    <MudTextField Label="Отправляемый текст" @bind-Value="Model.Text"
+                                  For="() => Model.Text"/>
+                    @* Зона изображений *@
+                    <MudStack Row="true" Spacing="5">
+                        <MudTextField T="string"
+                                      @bind-Value="SelectedImage"
+                                      Label="Ссылка на изображение">
+                        </MudTextField>
+                        <MudFab StartIcon="@Icons.Material.Filled.Add"
+                                Size="Size.Small" Text="Добавить"
+                                DisableElevation="true"
+                                OnClick="AddImage"/>
+                    </MudStack>
+                    <MudGrid>
+                        <MudItem>
+                            @if (Model.Images.Count == 0)
+                            {
+                                <MudText>Изображения не добавлены.</MudText>
+                            }
+                            else
+                            {
+                                @foreach (var option in Model.Images)
+                                {
+                                    <MudChip OnClose="DeleteImage" Value="@option">
+                                        @(option)
+                                    </MudChip>
+                                }
+                            }
+                        </MudItem>
+                    </MudGrid>
+
+                    @* Зона ссылок *@
+                    <MudStack Row="true" Spacing="5">
+                        <MudTextField T="string"
+                                      @bind-Value="SelectedUrl"
+                                      Label="Ссылка">
+                        </MudTextField>
+                        <MudFab StartIcon="@Icons.Material.Filled.Add"
+                                Size="Size.Small" Text="Добавить"
+                                DisableElevation="true"
+                                OnClick="AddUrl"/>
+                    </MudStack>
+                    <MudGrid>
+                        <MudItem>
+                            @if (Model.Urls.Count == 0)
+                            {
+                                <MudText>Ссылки не добавлены.</MudText>
+                            }
+                            else
+                            {
+                                @foreach (var option in Model.Urls)
+                                {
+                                    <MudChip OnClose="DeleteUrl" Value="@option">
+                                        @(option)
+                                    </MudChip>
+                                }
+                            }
+                        </MudItem>
+                    </MudGrid>
+                    <MudNumericField
+                        Label="Кол-во квизов"
+                        @bind-Value="@Model.QuizesCount"
+                        For="() => Model.QuizesCount"/>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudFab ButtonType="ButtonType.Submit"
+                            Variant="Variant.Filled"
+                            DisableElevation="true"
+                            StartIcon="@Icons.Material.Filled.Save"
+                            Text="Сохранить"
+                            Color="Color.Primary"/>
+                </MudCardActions>
+            </MudCard>
+        </EditForm>
+    </MudItem>
+
+    <MudItem xs="12" md="6">
+        @* Зона квизов *@
+        <MudStack Row="true" Spacing="5">
+            <MudAutocomplete @bind-Value="@SelectedQuiz"
+                             Label="Добавление квиза"
+                             SearchFunc="@SearchQuiz"
+                             ToStringFunc=@(x => x == null ? "" : x.Name)>
+            </MudAutocomplete>
+            <MudFab StartIcon="@Icons.Material.Filled.Add"
+                    Size="Size.Small"
+                    DisableElevation="true"
+                    OnClick="AddQuiz"/>
+
+            <MudFab StartIcon="@Icons.Material.Filled.Create"
+                    Size="Size.Small"
+                    Label="Создать"
+                    DisableElevation="true"
+                    OnClick="CreateQuiz"/>
+        </MudStack>
+        <MudTable Items="@Model.Quizes" Dense="true">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Квизы</MudText>
+                <MudSpacer/>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>
+                    <MudTableSortLabel SortBy="new Func<QuizViewModel, object>(x => x.Name)">Название</MudTableSortLabel>
+                </MudTh>
+                <MudTh>
+                    Действие
+                </MudTh>
+            </HeaderContent>
+            <RowTemplate Context="quiz">
+                <MudTd DataLabel="Название">@quiz.Name</MudTd>
+                <MudTd DataLabel="Действие">
+                    <MudFab Text="Удалить" Label="Удалить"
+                            Size="Size.Small"
+                            Color="Color.Error"
+                            StartIcon="@Icons.Material.Filled.Delete"
+                            OnClick="() => RemoveQuiz(quiz)"
+                            DisableElevation="true"/>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+    </MudItem>
+</MudGrid>
+
+<MudOverlay @bind-Visible="OverlayVisible" DarkBackground="true">
+    <MudGrid>
+        <MudItem xs="12">
+            <MudFab IconColor="Color.Warning" StartIcon="@Icons.Material.Filled.Close" OnClick="CloseOverlay"></MudFab>
+        </MudItem>
+        <MudItem>
+            <QuizEditCard UseNavigations="false"/>
+        </MudItem>
+    </MudGrid>
+</MudOverlay>
+
+@code
+{
+    [Parameter]
+    public bool UseNavigations { get; set; } = false;
+
+    [Parameter]
+    public Guid? ID { get; set; } = null!;
+
+    public bool IsEdit => ID != null;
+
+    public string PageTitle => IsEdit ? "Изменение шага" : "Создание шага";
+
+    public StepEditModel Model { get; set; } = new();
+
+    [Inject]
+    public IStepController ModelController { get; set; }
+
+    [Inject]
+    public IQuizController QuizController { get; set; }
+
+    [Inject]
+    public IMapper Mapper { get; set; }
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; }
+
+    public List<QuizViewModel> Quizes { get; set; } = new();
+
+    public string? SelectedImage { get; set; } = string.Empty;
+    public string? SelectedUrl { get; set; } = string.Empty;
+    public QuizViewModel? SelectedQuiz { get; set; }
+
+    public bool OverlayVisible { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDates();
+    }
+
+    private async Task<IEnumerable<QuizViewModel>> SearchQuiz(string arg)
+    {
+        if (string.IsNullOrWhiteSpace(arg))
+        {
+            return Quizes;
+        }
+
+        return Quizes.Where(x =>
+            x.Name
+                .Contains(arg, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private async Task LoadDates()
+    {
+        try
+        {
+            Quizes = await QuizController.GetAll();
+            if (IsEdit)
+            {
+                Model = Mapper.Map<StepEditModel>(await ModelController.GetByID(ID.GetValueOrDefault()));
+            }
+        }
+        catch (ApiException e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+
+    private async Task OnValidSumbit()
+    {
+        try
+        {
+            var result = IsEdit
+                ? await ModelController.Update(ID.GetValueOrDefault(), Model)
+                : await ModelController.Create(Model);
+
+            Model = Mapper.Map<StepEditModel>(result);
+
+            if (UseNavigations)
+            {
+                NavigationManager.NavigateTo($"/admin/steps/{result.ID}/edit");
+            }
+            Snackbar.Add("Шаг успешно сохранён");
+        }
+        catch (ValidationApiException validationException)
+        {
+            Snackbar.Add(validationException.Content.Detail, Severity.Error);
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(exception.RequestMessage.Content.ToString(), Severity.Error);
+        }
+    }
+
+    private void AddQuiz()
+    {
+        Model.Quizes.Add(SelectedQuiz);
+        StateHasChanged();
+    }
+
+    private void RemoveQuiz(QuizViewModel button)
+    {
+        Model.Quizes.Remove(button);
+    }
+
+    private async Task AddImage()
+    {
+        if (SelectedImage == null)
+        {
+            return;
+        }
+
+        Model.Images.Add(SelectedImage);
+    }
+
+    private void DeleteImage(MudChip obj)
+    {
+        Model.Images.Remove((string)obj.Value);
+    }
+
+
+    private async Task AddUrl()
+    {
+        if (SelectedUrl == null)
+        {
+            return;
+        }
+
+        Model.Urls.Add(SelectedUrl);
+    }
+
+    private void DeleteUrl(MudChip obj)
+    {
+        Model.Urls.Remove((string)obj.Value);
+    }
+
+    private async Task CreateQuiz()
+    {
+        OverlayVisible = true;
+    }
+
+    private async Task CloseOverlay()
+    {
+        OverlayVisible = false;
+        try
+        {
+            Quizes = await QuizController.GetAll();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+}

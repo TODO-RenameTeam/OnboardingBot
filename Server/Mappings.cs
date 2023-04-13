@@ -33,6 +33,8 @@ public class Mappings : Profile
         CreateMap<RoleOnboardingViewModel, RoleOnboardingEntity>().ReverseMap();
         CreateMap<RoleOnboardingEditModel, RoleOnboardingEntity>().ReverseMap();
 
+        CreateMap<RoleOnboardingStepEntity, RoleOnboardingStepViewModel>().ReverseMap();
+
         CreateMap<StepViewModel, StepEditModel>().ReverseMap();
         CreateMap<StepViewModel, StepEntity>().ReverseMap();
         CreateMap<StepEditModel, StepEntity>().ReverseMap();
@@ -49,14 +51,18 @@ public class Mappings : Profile
 
         CreateMap<UserAnswerViewModel, UserAnswerEntity>().ReverseMap();
 
+        CreateMap<UserViewModel, UserEditModel>().ReverseMap();
+        CreateMap<UserViewModel, UserEntity>().ReverseMap();
+        CreateMap<UserEditModel, UserEntity>().ReverseMap();
+
         CreateMap<UserOnboardingViewModel, UserOnboardingEditModel>().ReverseMap();
         CreateMap<UserOnboardingViewModel, UserOnboardingEntity>().ReverseMap();
         CreateMap<UserOnboardingEditModel, UserOnboardingEntity>().ReverseMap();
 
-        CreateMap<UserTestAnswerViewModel, UserTestAnswerEntity>().ReverseMap();
+        CreateMap<UserQuestionViewModel, UserQuestionEditModel>().ReverseMap();
+        CreateMap<UserQuestionViewModel, UserQuestionEntity>().ReverseMap();
+        CreateMap<UserQuestionEditModel, UserQuestionEntity>().ReverseMap();
 
-        CreateMap<UserViewModel, UserEditModel>().ReverseMap();
-        CreateMap<UserViewModel, UserEntity>().ReverseMap();
-        CreateMap<UserEditModel, UserEntity>().ReverseMap();
+        CreateMap<UserTestAnswerViewModel, UserTestAnswerEntity>().ReverseMap();
     }
 }

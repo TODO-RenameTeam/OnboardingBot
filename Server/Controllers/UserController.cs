@@ -23,7 +23,9 @@ public class UserController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<UserViewModel>>> GetAll()
     {
-        var res = Context.Users.ToList();
+        var res = Context.Users
+            .Include(x=>x.Position)
+            .ToList();
 
         return res.Select(x => Mapper.Map<UserViewModel>(x)).ToList();
     }
@@ -31,7 +33,9 @@ public class UserController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<UserViewModel>> GetByID(Guid id)
     {
-        var user = await Context.Users.FindAsync(id);
+        var user = Context.Users
+            .Include(x=>x.Position)
+            .FirstOrDefault(x => x.ID == id);
         if (user == null)
         {
             return NotFound();
@@ -44,7 +48,9 @@ public class UserController : ControllerBase
     [HttpGet("tg")]
     public async Task<ActionResult<UserViewModel>> GetByTelegramID(long id)
     {
-        var user = Context.Users.FirstOrDefault(x => x.TelegramID == id);
+        var user = Context.Users
+            .Include(x=>x.Position)
+            .FirstOrDefault(x => x.TelegramID == id);
         if (user == null)
         {
             return NotFound();
@@ -57,6 +63,14 @@ public class UserController : ControllerBase
     public async Task<ActionResult<UserViewModel>> Create(UserEditModel user)
     {
         var entity = Mapper.Map<UserEntity>(user);
+        entity.Position = null;
+        
+        var position = await Context.Positions.FindAsync(user.PositionID);
+        if (position != null)
+        {
+            entity.PositionID = position.ID;
+            entity.Position = position;
+        }
 
         entity.TelegramID = null;
         Context.Users.Add(entity);
@@ -69,11 +83,19 @@ public class UserController : ControllerBase
     public async Task<ActionResult<UserViewModel>> Update(Guid id, UserEntity user)
     {
         var entity = Mapper.Map<UserEntity>(user);
+        entity.Position = null;
         entity.ID = id;
 
         Context.Attach(entity);
         Context.Entry(entity).State = EntityState.Modified;
         Context.Entry(entity).Property(x => x.TelegramID).IsModified = false;
+        
+        var position = await Context.Positions.FindAsync(user.PositionID);
+        if (position != null)
+        {
+            entity.PositionID = position.ID;
+            entity.Position = position;
+        }
 
         await Context.SaveChangesAsync();
 

@@ -23,7 +23,8 @@ public class StepController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<StepViewModel>>> GetAll()
     {
-        var res = Context.Steps.ToList();
+        var res = Context.Steps.Include(x => x.Position)
+            .Include(x=>x.Quizes).ToList();
 
         return res.Select(x => Mapper.Map<StepViewModel>(x)).ToList();
     }
@@ -32,8 +33,7 @@ public class StepController : ControllerBase
     public async Task<ActionResult<StepViewModel>> GetByID(Guid id)
     {
         var step = Context.Steps.Include(x => x.Position)
-            .Include(x => x.Images)
-            .Include(x => x.Urls)
+            .Include(x=>x.Quizes)
             .FirstOrDefault(x => x.ID == id);
 
         if (step == null)
@@ -48,8 +48,20 @@ public class StepController : ControllerBase
     public async Task<ActionResult<StepViewModel>> Create(StepEditModel step)
     {
         var entity = Mapper.Map<StepEntity>(step);
+        entity.Quizes.Clear();
 
         Context.Steps.Add(entity);
+        await Context.SaveChangesAsync();
+        
+        foreach (var quizViewModel in step.Quizes)
+        {
+            var quiz = await Context.Quizes.FindAsync(quizViewModel.ID);
+            if (quiz != null)
+            {
+                entity.Quizes.Add(quiz);
+            }
+        }
+
         await Context.SaveChangesAsync();
 
         return await GetByID(entity.ID);
@@ -61,9 +73,24 @@ public class StepController : ControllerBase
         var entity = Mapper.Map<StepEntity>(step);
 
         entity.ID = id;
+        entity.Quizes.Clear();
 
         Context.Attach(entity);
         Context.Entry(entity).State = EntityState.Modified;
+
+        await Context.SaveChangesAsync();
+        
+        entity = Context.Steps.Include(x => x.Quizes)
+            .FirstOrDefault(x => x.ID == id);
+
+        foreach (var quizViewModel in step.Quizes)
+        {
+            var quiz = await Context.Quizes.FindAsync(quizViewModel.ID);
+            if (quiz != null && entity.Quizes.FirstOrDefault(x=>x.ID == quiz.ID) == null)
+            {
+                entity.Quizes.Add(quiz);
+            }
+        }
 
         await Context.SaveChangesAsync();
 

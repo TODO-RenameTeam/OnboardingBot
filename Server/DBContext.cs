@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OnboardingBot.Server.Entities;
+using OnboardingBot.Shared.ViewModels;
 
 namespace OnboardingBot.Server;
 
@@ -18,6 +19,7 @@ public class DBContext : DbContext
     public DbSet<UserTestAnswerEntity> UserTestAnswers => Set<UserTestAnswerEntity>();
     public DbSet<UserEntity> Users => Set<UserEntity>();
     public DbSet<UserOnboardingEntity> UserOnboardings => Set<UserOnboardingEntity>();
+    public DbSet<UserQuestionEntity> UserQuestions => Set<UserQuestionEntity>();
 
     public DBContext()
     {
@@ -34,21 +36,44 @@ public class DBContext : DbContext
         var splitStringConverter =
             new ValueConverter<HashSet<string>, string>(v => string.Join(";", v),
                 v => v.Split(new[] { ';' }).ToHashSet());
-        
+
         modelBuilder.Entity<TextCommandEntity>()
             .Property(nameof(TextCommandEntity.Images))
             .HasConversion(splitStringConverter);
-        
+
         modelBuilder.Entity<TextCommandEntity>()
             .Property(nameof(TextCommandEntity.Urls))
             .HasConversion(splitStringConverter);
-        
+
         modelBuilder.Entity<StepEntity>()
             .Property(nameof(StepEntity.Images))
             .HasConversion(splitStringConverter);
-        
+
         modelBuilder.Entity<StepEntity>()
             .Property(nameof(StepEntity.Urls))
             .HasConversion(splitStringConverter);
+
+        modelBuilder.Entity<UserOnboardingEntity>()
+            .HasKey(xx => new { xx.ID });
+
+        modelBuilder.Entity<RoleOnboardingEntity>()
+            .HasMany(x => x.Steps)
+            .WithMany(x => x.RoleOnboardings)
+            .UsingEntity<RoleOnboardingStepEntity>(
+                x => x
+                    .HasOne(m => m.Step)
+                    .WithMany(m => m.RoleOnboardingPositions)
+                    .HasForeignKey(m => m.StepID),
+                x => x
+                    .HasOne(m => m.RoleOnboarding)
+                    .WithMany(m => m.StepPositions)
+                    .HasForeignKey(m => m.RoleOnboardingID),
+                x =>
+                {
+                    x.Property(t => t.Position).IsRequired();
+                    x.Property(t => t.Position).HasDefaultValue(1);
+                    x.HasKey(t => new { t.RoleOnboardingID, t.StepID, t.Position });
+                }
+            );
     }
 }

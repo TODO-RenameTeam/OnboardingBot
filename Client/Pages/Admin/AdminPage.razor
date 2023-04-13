@@ -1,23 +1,73 @@
 @page "/admin"
 @page "/admin/index"
+@using OnboardingBot.Shared.APIs
+@using OnboardingBot.Shared.ViewModels
+@using QuestionBot.Shared.APIs
 
 @layout AdminLayout
 
 <PageTitle>Панель администратора</PageTitle>
 
 <MudGrid>
-    <MudItem xs="12" sm="6">
-        <MudPaper Class="pa-1">
-            <MudText Typo="Typo.h3">
+    <MudItem xs="12" sm="3">
+        <MudPaper Class="pa-3">
+            <MudText Typo="Typo.h6">
                 Пройдено тестов за сегодня:
             </MudText>
-            <MudText Typo="Typo.h2">
+            <MudText Typo="Typo.h3">
                 0
             </MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="3">
+        <MudPaper Class="pa-3">
+            <MudText Typo="Typo.h6">
+                Активных пользователей:
+            </MudText>
+            <MudText Typo="Typo.h3">
+                @(Users.Count(x=>x.TelegramID != null))
+            </MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="3">
+        <MudPaper Class="pa-3">
+            <MudText Typo="Typo.h6">
+                Вопросы, ожидающие ответы:
+            </MudText>
+            <MudText Typo="Typo.h3">
+                @(UserQuestions.Count(x => string.IsNullOrWhiteSpace(x.Answer)))
+            </MudText>
+            <MudFab DisableElevation="true"
+                            StartIcon="@Icons.Material.Filled.ArrowForward"
+                            Size="Size.Small" Href="admin/userquestions" Label="Открыть вопросы"/>
         </MudPaper>
     </MudItem>
 </MudGrid>
 
 @code {
+
+    [Inject]
+    public IUserController UserController { get; set; }
+
+    public List<UserViewModel> Users { get; set; } = new();
+
+    [Inject]
+    public IUserQuestionController UserQuestionController { get; set; }
+    
+    public List<UserQuestionViewModel> UserQuestions { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Users = await UserController.GetAll();
+            UserQuestions = await UserQuestionController.GetAll();
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
 
 }

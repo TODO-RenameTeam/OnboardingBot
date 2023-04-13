@@ -1,0 +1,160 @@
+﻿@using Refit
+@using AutoMapper
+@using OnboardingBot.Shared.APIs
+@using OnboardingBot.Shared.EditModels
+@using OnboardingBot.Shared.ViewModels
+@using System.ComponentModel.DataAnnotations
+@using OnboardingBot.Shared.Extensions
+
+<PageTitle>@PageTitle</PageTitle>
+
+<EditForm Model="@Model" OnValidSubmit="OnValidSumbit">
+    <DataAnnotationsValidator/>
+    <MudCard>
+        <MudCardContent>
+            <MudTextField Label="Название" @bind-Value="Model.Name" For="() => Model.Name"/>
+            <MudTextField Label="Текст" @bind-Value="Model.Text" For="() => Model.Text"/>
+            @* Зона ответов *@
+            <MudStack Row="true" Spacing="5">
+                <MudTextField T="string"
+                              @bind-Value="SelectedOption"
+                              Label="Ответ">
+                </MudTextField>
+                <MudFab StartIcon="@Icons.Material.Filled.Add"
+                        Size="Size.Small" Text="Добавить"
+                        DisableElevation="true"
+                        OnClick="AddOption"/>
+            </MudStack>
+            <MudGrid>
+                <MudItem>
+                    @if (Model.Options.Count == 0)
+                    {
+                        <MudText>Ответы не добавлены.</MudText>
+                    }
+                    else
+                    {
+                        @foreach (var option in Model.Options)
+                        {
+                            <MudChip OnClose="DeleteOption" Value="@option">
+                                @(option)
+                            </MudChip>
+                        }
+                    }
+                </MudItem>
+            </MudGrid>
+            <MudNumericField T="int" @bind-Value="Model.RightOptionID"
+                             For="() => Model.RightOptionID"
+                             Label="Номер правильного ответа"/>
+        </MudCardContent>
+        <MudCardActions>
+            <MudFab ButtonType="ButtonType.Submit"
+                    Variant="Variant.Filled"
+                    DisableElevation="true"
+                    StartIcon="@Icons.Material.Filled.Save"
+                    Text="Сохранить"
+                    Color="Color.Primary"/>
+        </MudCardActions>
+    </MudCard>
+</EditForm>
+
+@code
+{
+    [Parameter]
+    public bool UseNavigations { get; set; } = false;
+
+    [Parameter]
+    public Guid? ID { get; set; } = null!;
+
+    public bool IsEdit => ID != null;
+
+    public string PageTitle => IsEdit ? "Изменение квиза" : "Создание квиза";
+
+    public QuizEditModel Model { get; set; } = new();
+
+    [Inject]
+    public IQuizController ModelController { get; set; }
+
+    [Inject]
+    public IMapper Mapper { get; set; }
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; }
+
+    public string? SelectedOption { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDates();
+    }
+
+    private async Task LoadDates()
+    {
+        try
+        {
+            if (IsEdit)
+            {
+                Model = Mapper.Map<QuizEditModel>(await ModelController.GetByID(ID.GetValueOrDefault()));
+            }
+        }
+        catch (ApiException e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+
+    private async Task OnValidSumbit()
+    {
+        if (Model.Options.Count == 0)
+        {
+            Snackbar.Add("Укажите ответы!", Severity.Error);
+            return;
+        }
+
+        if (Model.RightOptionID > Model.Options.Count)
+        {
+            Snackbar.Add("Номер правильного ответа больше количества ответов!", Severity.Error);
+            return;
+        }
+        
+        try
+        {
+            var result = IsEdit
+                ? await ModelController.Update(ID.GetValueOrDefault(), Model)
+                : await ModelController.Create(Model);
+
+            Model = Mapper.Map<QuizEditModel>(result);
+            if (UseNavigations)
+            {
+                NavigationManager.NavigateTo($"/admin/quizs/{result.ID}/edit");
+            }
+            Snackbar.Add("Квиз успешно сохранён!");
+        }
+        catch (ValidationApiException validationException)
+        {
+            Snackbar.Add(validationException.Content.Detail, Severity.Error);
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(exception.RequestMessage.Content.ToString(), Severity.Error);
+        }
+    }
+
+
+    private async Task AddOption()
+    {
+        if (SelectedOption == null)
+        {
+            return;
+        }
+
+        Model.Options.Add(SelectedOption);
+    }
+
+    private void DeleteOption(MudChip obj)
+    {
+        Model.Options.Remove((string)obj.Value);
+    }
+}

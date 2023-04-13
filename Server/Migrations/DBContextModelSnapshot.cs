@@ -23,6 +23,21 @@ namespace OnboardingBot.Server.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("ButtonEntityTextCommandEntity", b =>
+                {
+                    b.Property<Guid>("ButtonsID")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TextCommandsID")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("ButtonsID", "TextCommandsID");
+
+                    b.HasIndex("TextCommandsID");
+
+                    b.ToTable("ButtonEntityTextCommandEntity");
+                });
+
             modelBuilder.Entity("OnboardingBot.Server.Entities.AnswerEntity", b =>
                 {
                     b.Property<Guid>("ID")
@@ -66,17 +81,12 @@ namespace OnboardingBot.Server.Migrations
                     b.Property<Guid?>("TestEntityID")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("TextCommandEntityID")
-                        .HasColumnType("uuid");
-
                     b.Property<int>("Type")
                         .HasColumnType("integer");
 
                     b.HasKey("ID");
 
                     b.HasIndex("TestEntityID");
-
-                    b.HasIndex("TextCommandEntityID");
 
                     b.ToTable("Buttons");
                 });
@@ -91,7 +101,6 @@ namespace OnboardingBot.Server.Migrations
                         .HasColumnType("text");
 
                     b.Property<Guid?>("MainUserID")
-                        .IsRequired()
                         .HasColumnType("uuid");
 
                     b.Property<string>("Name")
@@ -138,6 +147,10 @@ namespace OnboardingBot.Server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<List<string>>("Options")
                         .IsRequired()
                         .HasColumnType("text[]");
@@ -171,6 +184,26 @@ namespace OnboardingBot.Server.Migrations
                     b.HasIndex("PositionID");
 
                     b.ToTable("RoleOnboardings");
+                });
+
+            modelBuilder.Entity("OnboardingBot.Server.Entities.RoleOnboardingStepEntity", b =>
+                {
+                    b.Property<Guid>("RoleOnboardingID")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StepID")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Position")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1);
+
+                    b.HasKey("RoleOnboardingID", "StepID", "Position");
+
+                    b.HasIndex("StepID");
+
+                    b.ToTable("RoleOnboardingStepEntity");
                 });
 
             modelBuilder.Entity("OnboardingBot.Server.Entities.StepEntity", b =>
@@ -338,6 +371,9 @@ namespace OnboardingBot.Server.Migrations
                     b.Property<string>("MiddleName")
                         .HasColumnType("text");
 
+                    b.Property<Guid?>("PositionID")
+                        .HasColumnType("uuid");
+
                     b.Property<int>("Role")
                         .HasColumnType("integer");
 
@@ -345,6 +381,8 @@ namespace OnboardingBot.Server.Migrations
                         .HasColumnType("bigint");
 
                     b.HasKey("ID");
+
+                    b.HasIndex("PositionID");
 
                     b.ToTable("Users");
                 });
@@ -354,6 +392,12 @@ namespace OnboardingBot.Server.Migrations
                     b.Property<Guid>("ID")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("DateTimeEnd")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("DateTimeStart")
+                        .HasColumnType("timestamp without time zone");
 
                     b.Property<Guid>("RoleOnboardingID")
                         .HasColumnType("uuid");
@@ -373,6 +417,35 @@ namespace OnboardingBot.Server.Migrations
                     b.HasIndex("UserID");
 
                     b.ToTable("UserOnboardings");
+                });
+
+            modelBuilder.Entity("OnboardingBot.Server.Entities.UserQuestionEntity", b =>
+                {
+                    b.Property<Guid>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Answer")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DateTimeAnswering")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("DateTimeQuestion")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Question")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserQuestionID")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("ID");
+
+                    b.HasIndex("UserQuestionID");
+
+                    b.ToTable("UserQuestions");
                 });
 
             modelBuilder.Entity("OnboardingBot.Server.Entities.UserTestAnswerEntity", b =>
@@ -432,6 +505,21 @@ namespace OnboardingBot.Server.Migrations
                     b.ToTable("QuizEntityTextCommandEntity");
                 });
 
+            modelBuilder.Entity("ButtonEntityTextCommandEntity", b =>
+                {
+                    b.HasOne("OnboardingBot.Server.Entities.ButtonEntity", null)
+                        .WithMany()
+                        .HasForeignKey("ButtonsID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OnboardingBot.Server.Entities.TextCommandEntity", null)
+                        .WithMany()
+                        .HasForeignKey("TextCommandsID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("OnboardingBot.Server.Entities.AnswerEntity", b =>
                 {
                     b.HasOne("OnboardingBot.Server.Entities.QuestionEntity", null)
@@ -444,19 +532,13 @@ namespace OnboardingBot.Server.Migrations
                     b.HasOne("OnboardingBot.Server.Entities.TestEntity", null)
                         .WithMany("Buttons")
                         .HasForeignKey("TestEntityID");
-
-                    b.HasOne("OnboardingBot.Server.Entities.TextCommandEntity", null)
-                        .WithMany("Buttons")
-                        .HasForeignKey("TextCommandEntityID");
                 });
 
             modelBuilder.Entity("OnboardingBot.Server.Entities.PositionEntity", b =>
                 {
                     b.HasOne("OnboardingBot.Server.Entities.UserEntity", "MainUser")
                         .WithMany()
-                        .HasForeignKey("MainUserID")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("MainUserID");
 
                     b.Navigation("MainUser");
                 });
@@ -477,6 +559,25 @@ namespace OnboardingBot.Server.Migrations
                         .IsRequired();
 
                     b.Navigation("Position");
+                });
+
+            modelBuilder.Entity("OnboardingBot.Server.Entities.RoleOnboardingStepEntity", b =>
+                {
+                    b.HasOne("OnboardingBot.Server.Entities.RoleOnboardingEntity", "RoleOnboarding")
+                        .WithMany("StepPositions")
+                        .HasForeignKey("RoleOnboardingID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OnboardingBot.Server.Entities.StepEntity", "Step")
+                        .WithMany("RoleOnboardingPositions")
+                        .HasForeignKey("StepID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RoleOnboarding");
+
+                    b.Navigation("Step");
                 });
 
             modelBuilder.Entity("OnboardingBot.Server.Entities.StepEntity", b =>
@@ -548,10 +649,19 @@ namespace OnboardingBot.Server.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("OnboardingBot.Server.Entities.UserEntity", b =>
+                {
+                    b.HasOne("OnboardingBot.Server.Entities.PositionEntity", "Position")
+                        .WithMany()
+                        .HasForeignKey("PositionID");
+
+                    b.Navigation("Position");
+                });
+
             modelBuilder.Entity("OnboardingBot.Server.Entities.UserOnboardingEntity", b =>
                 {
                     b.HasOne("OnboardingBot.Server.Entities.RoleOnboardingEntity", "RoleOnboarding")
-                        .WithMany("Steps")
+                        .WithMany("UserSteps")
                         .HasForeignKey("RoleOnboardingID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -573,6 +683,17 @@ namespace OnboardingBot.Server.Migrations
                     b.Navigation("User");
 
                     b.Navigation("UserCurrentStep");
+                });
+
+            modelBuilder.Entity("OnboardingBot.Server.Entities.UserQuestionEntity", b =>
+                {
+                    b.HasOne("OnboardingBot.Server.Entities.UserEntity", "UserQuestion")
+                        .WithMany("Questions")
+                        .HasForeignKey("UserQuestionID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("UserQuestion");
                 });
 
             modelBuilder.Entity("OnboardingBot.Server.Entities.UserTestAnswerEntity", b =>
@@ -631,7 +752,14 @@ namespace OnboardingBot.Server.Migrations
 
             modelBuilder.Entity("OnboardingBot.Server.Entities.RoleOnboardingEntity", b =>
                 {
-                    b.Navigation("Steps");
+                    b.Navigation("StepPositions");
+
+                    b.Navigation("UserSteps");
+                });
+
+            modelBuilder.Entity("OnboardingBot.Server.Entities.StepEntity", b =>
+                {
+                    b.Navigation("RoleOnboardingPositions");
                 });
 
             modelBuilder.Entity("OnboardingBot.Server.Entities.TestEntity", b =>
@@ -641,9 +769,9 @@ namespace OnboardingBot.Server.Migrations
                     b.Navigation("Questions");
                 });
 
-            modelBuilder.Entity("OnboardingBot.Server.Entities.TextCommandEntity", b =>
+            modelBuilder.Entity("OnboardingBot.Server.Entities.UserEntity", b =>
                 {
-                    b.Navigation("Buttons");
+                    b.Navigation("Questions");
                 });
 
             modelBuilder.Entity("OnboardingBot.Server.Entities.UserTestAnswerEntity", b =>

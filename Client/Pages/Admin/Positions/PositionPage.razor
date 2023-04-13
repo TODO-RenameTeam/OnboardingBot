@@ -1,0 +1,109 @@
+@page "/admin/positions/{ID:guid}/edit"
+@page "/admin/positions/create"
+
+@using Refit
+@using AutoMapper
+@using OnboardingBot.Shared.APIs
+@using OnboardingBot.Shared.EditModels
+@using ButtonType = MudBlazor.ButtonType
+
+@layout AdminLayout
+
+<PageTitle>@PageTitle</PageTitle>
+
+<MudGrid>
+    <MudItem>
+        <MudFab DisableElevation="true"
+                StartIcon="@Icons.Material.Filled.ArrowBack"
+                Text="Назад" Href="/admin/positions"/>
+    </MudItem>
+    <MudItem>
+        <MudText Typo="Typo.h3">@PageTitle</MudText>
+    </MudItem>
+    <MudItem xs="12">
+        <EditForm Model="@Model" OnValidSubmit="OnValidSumbit">
+            <DataAnnotationsValidator/>
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField Label="Название" @bind-Value="Model.Name" For="() => Model.Name"/>
+                    <MudTextField Label="Описание" @bind-Value="Model.Description" For="() => Model.Description"/>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudFab ButtonType="ButtonType.Submit"
+                            Variant="Variant.Filled"
+                            DisableElevation="true"
+                            StartIcon="@Icons.Material.Filled.Save"
+                            Text="Сохранить"
+                            Color="Color.Primary"/>
+                </MudCardActions>
+            </MudCard>
+        </EditForm>
+    </MudItem>
+</MudGrid>
+
+@code
+{
+    [Parameter]
+    public Guid? ID { get; set; }
+
+    public bool IsEdit => ID != null;
+
+    public string PageTitle => IsEdit ? "Изменение должности" : "Создание должности";
+
+    public PositionEditModel Model { get; set; } = new();
+
+    [Inject]
+    public IPositionController ModelController { get; set; }
+
+    [Inject]
+    public IMapper Mapper { get; set; }
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDates();
+    }
+
+    private async Task LoadDates()
+    {
+        try
+        {
+            if (IsEdit)
+            {
+                Model = Mapper.Map<PositionEditModel>(await ModelController.GetByID(ID.GetValueOrDefault()));
+            }
+        }
+        catch (ApiException e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+
+    private async Task OnValidSumbit()
+    {
+        try
+        {
+            var result = IsEdit
+                ? await ModelController.Update(ID.GetValueOrDefault(), Model)
+                : await ModelController.Create(Model);
+
+            Model = Mapper.Map<PositionEditModel>(result);
+            NavigationManager.NavigateTo($"/admin/positions/{result.ID}/edit");
+            Snackbar.Add("Должность успешно сохранена!");
+        }
+        catch (ValidationApiException validationException)
+        {
+            Snackbar.Add(validationException.Content.Detail, Severity.Error);
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(exception.RequestMessage.Content.ToString(), Severity.Error);
+        }
+    }
+}

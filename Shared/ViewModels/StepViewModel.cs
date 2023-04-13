@@ -10,6 +10,10 @@ public class StepViewModel
     public int QuizesCount { get; set; } = 0;
     public Guid? PositionID { get; set; }
     
-    
+    public PositionViewModel? Position { get; set; }
+
     public HashSet<QuizViewModel>? Quizes { get; set; } = new();
+    
+    public HashSet<RoleOnboardingViewModel>? RoleOnboardings { get; set; } = new();
+    public HashSet<RoleOnboardingStepViewModel>? RoleOnboardingPositions { get; set; } = new();
 }

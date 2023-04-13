@@ -2,6 +2,11 @@
 @using OnboardingBot.Shared.ViewModels
 @using Refit
 @using OnboardingBot.Shared.APIs
+@using OnboardingBot.Shared.Extensions
+@using System.ComponentModel.DataAnnotations
+@using OnboardingBot.Shared.Models
+
+@layout AdminLayout
 
 <PageTitle>Сотрудники</PageTitle>
 
@@ -9,6 +14,7 @@
     <MudItem>
         <MudFab DisableElevation="true"
                 StartIcon="@Icons.Material.Filled.ArrowBack"
+                Size="Size.Small"
                 Text="Домой" Href="/admin" Label="Домой"/>
     </MudItem>
     <MudItem>
@@ -38,6 +44,15 @@
                 <MudTableSortLabel SortBy="new Func<UserViewModel, object>(x => x.MiddleName)">Отчество</MudTableSortLabel>
             </MudTh>
             <MudTh>
+                <MudTableSortLabel SortBy="new Func<UserViewModel, object>(x => x.Role)">Роль</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<UserViewModel, object>(x => x.Position)">Должность</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<UserViewModel, object>(x => x.TelegramID)">Статус привязки</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
                 Действия
             </MudTh>
         </HeaderContent>
@@ -52,13 +67,55 @@
                 @context.MiddleName
             </MudTd>
             <MudTd>
-                <MudButton Size="Size.Small" Color="Color.Success" Href="@($"/admin/users/{context.ID}/info")">Инфо</MudButton>
+                @(context.Role.GetAttribute<DisplayAttribute, UserRole>().Name)
+            </MudTd>
+            <MudTd>
+                @if (context.Position == null)
+                {
+                    <MudChip Color="Color.Warning" Size="Size.Small">Должность не указана</MudChip>
+                }
+                else
+                {
+                    @context.Position.Name
+                }
+            </MudTd>
+            <MudTd>
+                <MudChip Color="@(context.TelegramID == null ? Color.Error : Color.Success)" Size="Size.Small">
+                    @(context.TelegramID == null ? "Не привязан к ТГ" : "Привязан к ТГ")
+                </MudChip>
+            </MudTd>
+            <MudTd>
                 <MudButton Size="Size.Small" Color="Color.Warning" Href="@($"/admin/users/{context.ID}/edit")">Изменить</MudButton>
-                @* <MudButton Size="Size.Small" Color="Color.Error" OnClick="(() => OnDeleteModel(context))">Удалить</MudButton> *@
+                <MudButton Size="Size.Small" Color="Color.Success" OnClick="(() => OnGenerateCode(context))">
+                    @(context.TelegramID == null ? "Привязать ТГ" : "Перепривязать ТГ")
+                </MudButton>
+                <MudButton Size="Size.Small" Color="Color.Error" OnClick="(() => OnDeleteModel(context))">Удалить</MudButton>
             </MudTd>
         </RowTemplate>
     </MudTable>
 </MudPaper>
+<MudOverlay @bind-Visible="@OverlayIsVisible" DarkBackground="true">
+    <MudGrid>
+        <MudItem xs="12">
+            <MudFab IconSize="Size.Small" StartIcon="@Icons.Material.Filled.Close"
+                    OnClick="() => { OverlayIsVisible = false; }">
+            </MudFab>
+        </MudItem>
+        <MudItem xs="12">
+            <MudPaper Class="pa-2">
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudText>Сотрудник <b>@OverlayUser?.FullName</b></MudText>
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudText>Код привязки: @OverlayTelegramCode?.Code</MudText>
+                    </MudItem>
+                </MudGrid>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+
+</MudOverlay>
 
 @code
 {
@@ -66,6 +123,20 @@
 
     [Inject]
     private IUserController ModelController { get; set; }
+
+    [Inject]
+    private ITelegramCodeController TelegramCodeController { get; set; }
+
+    [Inject]
+    private IDialogService DialogService { get; set; }
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; }
+
+
+    private bool OverlayIsVisible { get; set; } = false;
+    public UserViewModel? OverlayUser { get; set; } = null!;
+    public TelegramCodeViewModel? OverlayTelegramCode { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -76,7 +147,44 @@
         catch (ApiException e)
         {
             Console.WriteLine(e);
-            // throw;
+    // throw;
+        }
+    }
+
+    private async Task OnDeleteModel(UserViewModel model)
+    {
+        var result = await DialogService.ShowMessageBox("Подтверждение",
+            $"Вы точно хотите удалить {model.FullName}?", "Да", "Нет");
+
+        if (!result.GetValueOrDefault(false))
+        {
+            return;
+        }
+
+        try
+        {
+            await ModelController.Delete(model.ID);
+            Models = await ModelController.GetAll();
+            Snackbar.Add("Сотрудник успешно удалён!", Severity.Success);
+        }
+        catch (ValidationApiException validationException)
+        {
+            Snackbar.Add(validationException.Content.Detail, Severity.Error);
+        }
+    }
+
+    private async Task OnGenerateCode(UserViewModel model)
+    {
+        try
+        {
+            OverlayTelegramCode = await TelegramCodeController.Generate(model.ID);
+            OverlayUser = model;
+
+            OverlayIsVisible = true;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
         }
     }
 }

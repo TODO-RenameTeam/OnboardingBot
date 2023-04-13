@@ -1,0 +1,108 @@
+@page "/admin/onboardings"
+@using OnboardingBot.Shared.ViewModels
+@using Refit
+@using OnboardingBot.Shared.APIs
+@using OnboardingBot.Shared.Extensions
+@using System.ComponentModel.DataAnnotations
+@using OnboardingBot.Shared.Models
+
+@layout AdminLayout
+
+<PageTitle>Онбоардинг</PageTitle>
+
+<MudGrid>
+    <MudItem>
+        <MudFab DisableElevation="true"
+                StartIcon="@Icons.Material.Filled.ArrowBack"
+                Size="Size.Small"
+                Text="Домой" Href="/admin" Label="Домой"/>
+    </MudItem>
+    <MudItem>
+        <MudText Typo="Typo.h3" GutterBottom="true">Онбоардинг</MudText>
+    </MudItem>
+    <MudItem>
+        <MudFab StartIcon="@Icons.Material.Filled.Add"
+                Size="Size.Small"
+                Color="Color.Success"
+                Label="Добавить"
+                Text="Добавить"
+                DisableElevation="true"
+                Href="/admin/onboardings/create"/>
+    </MudItem>
+</MudGrid>
+
+<MudPaper>
+    <MudTable Items="@Models">
+        <HeaderContent>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<RoleOnboardingViewModel, object>(x => x.Position.Name)">Для должности</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                Действия
+            </MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>
+                @(context.Position.Name ?? "не указана")
+            </MudTd>
+            <MudTd>
+                <MudButton Size="Size.Small" Color="Color.Success" Href="@($"/admin/onboardings/{context.ID}/users")">Инфо о прохождении</MudButton>
+                <MudButton Size="Size.Small" Color="Color.Warning" Href="@($"/admin/onboardings/{context.ID}/edit")">Изменить</MudButton>
+                <MudButton Size="Size.Small" Color="Color.Error" OnClick="(() => OnDeleteModel(context))">Удалить</MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code
+{
+    private List<RoleOnboardingViewModel> Models { get; set; } = new();
+
+    [Inject]
+    private IRoleOnboardingController ModelController { get; set; }
+
+    [Inject]
+    private ITelegramCodeController TelegramCodeController { get; set; }
+
+    [Inject]
+    private IDialogService DialogService { get; set; }
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Models = await ModelController.GetAll();
+        }
+        catch (ApiException e)
+        {
+            Console.WriteLine(e);
+    // throw;
+        }
+    }
+    
+    
+    private async Task OnDeleteModel(RoleOnboardingViewModel model)
+    {
+        var result = await DialogService.ShowMessageBox("Подтверждение",
+            $"Вы точно хотите удалить онбоардинг для должностей {model.Position.Name}?", "Да", "Нет");
+
+        if (!result.GetValueOrDefault(false))
+        {
+            return;
+        }
+
+        try
+        {
+            await ModelController.Delete(model.ID);
+            Models = await ModelController.GetAll();
+            Snackbar.Add("Онбординг успешно удалён!", Severity.Success);
+        }
+        catch (ValidationApiException validationException)
+        {
+            Snackbar.Add(validationException.Content.Detail, Severity.Error);
+        }
+    }
+}
