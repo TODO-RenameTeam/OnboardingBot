@@ -31,19 +31,22 @@ public class RefitProvider
         };
 
         var apiUrl = url;
-        
+
+        services.AddRefitClient<INotificationController>(refitSettings)
+            .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
+
         services.AddRefitClient<IRoleOnboardingController>(refitSettings)
             .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
-        
+
         services.AddRefitClient<IPositionController>(refitSettings)
             .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
-        
+
         services.AddRefitClient<IQuizController>(refitSettings)
             .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
-        
+
         services.AddRefitClient<IStepController>(refitSettings)
             .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
-        
+
         services.AddRefitClient<ITelegramCodeController>(refitSettings)
             .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
 
@@ -52,10 +55,10 @@ public class RefitProvider
 
         services.AddRefitClient<IUserController>(refitSettings)
             .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
-        
+
         services.AddRefitClient<IUserOnboardingController>(refitSettings)
             .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
-        
+
         services.AddRefitClient<IUserQuestionController>(refitSettings)
             .ConfigureHttpClient(c => c.BaseAddress = apiUrl);
     }

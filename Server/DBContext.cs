@@ -8,6 +8,7 @@ namespace OnboardingBot.Server;
 public class DBContext : DbContext
 {
     public DbSet<ButtonEntity> Buttons => Set<ButtonEntity>();
+    public DbSet<NotificationEntity> Notifications => Set<NotificationEntity>();
     public DbSet<PositionEntity> Positions => Set<PositionEntity>();
     public DbSet<QuestionEntity> Questions => Set<QuestionEntity>();
     public DbSet<QuizEntity> Quizes => Set<QuizEntity>();

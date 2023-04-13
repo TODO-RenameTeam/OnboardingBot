@@ -90,6 +90,7 @@
                     @(context.TelegramID == null ? "Привязать ТГ" : "Перепривязать ТГ")
                 </MudButton>
                 <MudButton Size="Size.Small" Color="Color.Error" OnClick="(() => OnDeleteModel(context))">Удалить</MudButton>
+                <MudButton Size="Size.Small" Color="Color.Success" StartIcon="@Icons.Material.Filled.Send" Href="@($"/admin/users/{context.ID}/sent")">Отправить сообщение</MudButton>
             </MudTd>
         </RowTemplate>
     </MudTable>

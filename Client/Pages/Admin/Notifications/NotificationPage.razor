@@ -1,0 +1,147 @@
+@page "/admin/notifications/{ID:guid}/edit"
+@page "/admin/notifications/create"
+
+@using Refit
+@using AutoMapper
+@using OnboardingBot.Shared.APIs
+@using OnboardingBot.Shared.EditModels
+@using System.ComponentModel.DataAnnotations
+@using OnboardingBot.Shared.Extensions
+@using OnboardingBot.Shared.Models
+@using OnboardingBot.Shared.ViewModels
+@using ButtonType = MudBlazor.ButtonType
+
+@layout AdminLayout
+
+<PageTitle>@PageTitle</PageTitle>
+
+<MudGrid>
+    <MudItem>
+        <MudFab DisableElevation="true"
+                StartIcon="@Icons.Material.Filled.ArrowBack"
+                Text="Назад" Href="/admin/notifications"/>
+    </MudItem>
+    <MudItem>
+        <MudText Typo="Typo.h3">@PageTitle</MudText>
+    </MudItem>
+    <MudItem xs="12">
+        <EditForm Model="@Model" OnValidSubmit="OnValidSumbit">
+            <DataAnnotationsValidator/>
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField Label="Название" @bind-Value="Model.Name" For="() => Model.Name"/>
+                    <MudTextField Label="Текст" @bind-Value="Model.Text" For="() => Model.Text"/>
+                    <MudNumericField T="int?" Label="Кол-во нужных отправлений" @bind-Value="Model.Count"/>
+                    <MudNumericField T="int?" Label="Кол-во отправлений" @bind-Value="Model.Sending"/>
+                    <MudAutocomplete @bind-Value="@Model.Position"
+                                     Label="Должность"
+                                     SearchFunc="@SearchPosition"
+                                     ToStringFunc=@(x => x == null ? "" : x.Name)>
+                    </MudAutocomplete>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudFab ButtonType="ButtonType.Submit"
+                            Variant="Variant.Filled"
+                            DisableElevation="true"
+                            StartIcon="@Icons.Material.Filled.Save"
+                            Text="Сохранить"
+                            Color="Color.Primary"/>
+                </MudCardActions>
+            </MudCard>
+        </EditForm>
+    </MudItem>
+</MudGrid>
+
+@code
+{
+    [Parameter]
+    public Guid? ID { get; set; }
+
+    public bool IsEdit => ID != null;
+
+    public string PageTitle => IsEdit ? "Изменение сотрудника" : "Создание сотрудника";
+
+    public NotificationEditModel Model { get; set; } = new();
+
+    [Inject]
+    public INotificationController ModelController { get; set; }
+
+    [Inject]
+    public IPositionController PositionController { get; set; }
+
+    public List<PositionViewModel> Positions { get; set; } = new();
+
+    [Inject]
+    public IMapper Mapper { get; set; }
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDates();
+    }
+
+    private async Task<IEnumerable<PositionViewModel>> SearchPosition(string arg)
+    {
+        if (string.IsNullOrWhiteSpace(arg))
+        {
+            return Positions;
+        }
+
+        return Positions.Where(x =>
+            x.Name
+                .Contains(arg, StringComparison.InvariantCultureIgnoreCase));
+    }
+
+    private async Task LoadDates()
+    {
+        try
+        {
+            Positions = await PositionController.GetAll();
+            if (IsEdit)
+            {
+                Model = Mapper.Map<NotificationEditModel>(await ModelController.GetByID(ID.GetValueOrDefault()));
+                if (Model.PositionID != null)
+                {
+                    Model.Position = Positions.FirstOrDefault(x => x.ID == Model.PositionID);
+                }
+            }
+        }
+        catch (ApiException e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+
+    private async Task OnValidSumbit()
+    {
+        if (Model.Position != null)
+        {
+            Model.PositionID = Model.Position.ID;
+        }
+
+        try
+        {
+            var result = IsEdit
+                ? await ModelController.Update(ID.GetValueOrDefault(), Model)
+                : await ModelController.Create(Model);
+
+            Model = Mapper.Map<NotificationEditModel>(result);
+            NavigationManager.NavigateTo($"/admin/notifications/{result.ID}/edit");
+            Snackbar.Add("Сотрудник успешно сохранён!");
+        }
+        catch (ValidationApiException validationException)
+        {
+            Snackbar.Add(validationException.Content.Detail, Severity.Error);
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(exception.RequestMessage.Content.ToString(), Severity.Error);
+        }
+    }
+}

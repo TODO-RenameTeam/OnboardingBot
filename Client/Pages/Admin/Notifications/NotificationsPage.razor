@@ -1,0 +1,161 @@
+@page "/admin/notifications"
+@using OnboardingBot.Shared.ViewModels
+@using Refit
+@using OnboardingBot.Shared.APIs
+@using OnboardingBot.Shared.Extensions
+@using System.ComponentModel.DataAnnotations
+@using OnboardingBot.Shared.Models
+
+@layout AdminLayout
+
+<PageTitle>Сотрудники</PageTitle>
+
+<MudGrid>
+    <MudItem>
+        <MudFab DisableElevation="true"
+                StartIcon="@Icons.Material.Filled.ArrowBack"
+                Size="Size.Small"
+                Text="Домой" Href="/admin" Label="Домой"/>
+    </MudItem>
+    <MudItem>
+        <MudText Typo="Typo.h3" GutterBottom="true">Рассылки</MudText>
+    </MudItem>
+    <MudItem>
+        <MudFab StartIcon="@Icons.Material.Filled.Add"
+                Size="Size.Small"
+                Color="Color.Success"
+                Label="Добавить"
+                Text="Добавить"
+                DisableElevation="true"
+                Href="/admin/notifications/create"/>
+    </MudItem>
+</MudGrid>
+
+<MudPaper>
+    <MudTable Items="@Models">
+        <HeaderContent>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<NotificationViewModel, object>(x => x.Name)">Название</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<NotificationViewModel, object>(x => x.Count)">Кол-во отправлений</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<NotificationViewModel, object>(x => x.Minutes)">Кол-во минут</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<NotificationViewModel, object>(x => x.Sending)">Отправлено</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<NotificationViewModel, object>(x => x.Position)">Должность</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                Действия
+            </MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>
+                @context.Name
+            </MudTd>
+            <MudTd>
+                @context.Count?
+            </MudTd>
+            <MudTd>
+                @context.Minutes?
+            </MudTd>
+            <MudTd>
+                @context.Sending?
+            </MudTd>
+            <MudTd>
+                @if (context.Position == null)
+                {
+                    <MudChip Color="Color.Warning" Size="Size.Small">Должность не указана</MudChip>
+                }
+                else
+                {
+                    @context.Position.Name
+                }
+            </MudTd>
+            <MudTd>
+                <MudButton Size="Size.Small" Color="Color.Warning" Href="@($"/admin/notifications/{context.ID}/edit")">Изменить</MudButton>
+                <MudButton Size="Size.Small" Color="Color.Success" OnClick="(() => OnStart(context))">
+                    @(context.DateTimeStart == null ? "Начать рассылку" : "Начать рассылку заного")
+                </MudButton>
+                <MudButton Size="Size.Small" Color="Color.Error" OnClick="(() => OnDeleteModel(context))">Удалить</MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code
+{
+    private List<NotificationViewModel> Models { get; set; } = new();
+
+    [Inject]
+    private INotificationController ModelController { get; set; }
+
+    [Inject]
+    private ITelegramCodeController TelegramCodeController { get; set; }
+
+    [Inject]
+    private IDialogService DialogService { get; set; }
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; }
+
+
+    private bool OverlayIsVisible { get; set; } = false;
+    public NotificationViewModel? OverlayNotification { get; set; } = null!;
+    public TelegramCodeViewModel? OverlayTelegramCode { get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Models = await ModelController.GetAll();
+        }
+        catch (ApiException e)
+        {
+            Console.WriteLine(e);
+    // throw;
+        }
+    }
+
+    private async Task OnDeleteModel(NotificationViewModel model)
+    {
+        var result = await DialogService.ShowMessageBox("Подтверждение",
+            $"Вы точно хотите удалить {model.Name}?", "Да", "Нет");
+
+        if (!result.GetValueOrDefault(false))
+        {
+            return;
+        }
+
+        try
+        {
+            await ModelController.Delete(model.ID);
+            Models = await ModelController.GetAll();
+            Snackbar.Add("Рассылка успешно удалена!", Severity.Success);
+        }
+        catch (ValidationApiException validationException)
+        {
+            Snackbar.Add(validationException.Content.Detail, Severity.Error);
+        }
+    }
+
+    private async Task OnStart(NotificationViewModel model)
+    {
+        try
+        {
+            await ModelController.Start(model.ID);
+
+            Snackbar.Add("Рассылка начата успешно!", Severity.Success);
+
+            Models = await ModelController.GetAll();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+}

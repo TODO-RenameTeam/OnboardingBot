@@ -10,6 +10,7 @@ public class Mappings : Profile
     {
         CreateMap<AnswerViewModel, AnswerEditModel>().ReverseMap();
         CreateMap<ButtonViewModel, ButtonEditModel>().ReverseMap();
+        CreateMap<NotificationViewModel, NotificationEditModel>().ReverseMap();
         CreateMap<PositionViewModel, PositionEditModel>().ReverseMap();
         CreateMap<QuestionViewModel, QuestionEditModel>().ReverseMap();
         CreateMap<QuizViewModel, QuizEditModel>().ReverseMap();
