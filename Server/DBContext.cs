@@ -53,6 +53,9 @@ public class DBContext : DbContext
             .Property(nameof(StepEntity.Urls))
             .HasConversion(splitStringConverter);
 
+        modelBuilder.Entity<UserOnboardingEntity>()
+            .HasKey(xx => new { xx.ID, xx.RoleOnboardingID, xx.UserCurrentStepID });
+
         modelBuilder.Entity<RoleOnboardingEntity>()
             .HasMany(x => x.Steps)
             .WithMany(x => x.RoleOnboardings)

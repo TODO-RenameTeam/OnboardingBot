@@ -36,13 +36,11 @@
                                      Label="Роль"
                                      SearchFunc="@SearchUserRole"
                                      ToStringFunc=@(x => x.GetAttribute<DisplayAttribute, UserRole>().Name)>
-
                     </MudAutocomplete>
                     <MudAutocomplete @bind-Value="@Model.Position"
                                      Label="Должность"
                                      SearchFunc="@SearchPosition"
                                      ToStringFunc=@(x => x == null ? "" : x.Name)>
-
                     </MudAutocomplete>
                 </MudCardContent>
                 <MudCardActions>

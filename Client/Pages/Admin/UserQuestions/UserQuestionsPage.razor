@@ -12,7 +12,7 @@
 
 @layout AdminLayout
 
-<PageTitle>Сотрудники</PageTitle>
+<PageTitle>Вопросы сотрудников</PageTitle>
 
 <MudGrid>
     <MudItem>
@@ -22,7 +22,7 @@
                 Text="Домой" Href="/admin" Label="Домой"/>
     </MudItem>
     <MudItem>
-        <MudText Typo="Typo.h3" GutterBottom="true">Сотрудники</MudText>
+        <MudText Typo="Typo.h3" GutterBottom="true">Вопросы сотрудников</MudText>
     </MudItem>
 </MudGrid>
 
@@ -147,7 +147,6 @@
         catch (ApiException e)
         {
             Console.WriteLine(e);
-    // throw;
         }
     }
 
@@ -187,7 +186,7 @@
 
             var result = await ModelController.Update(OverlayUserQuestion.ID, Mapper.Map<UserQuestionEditModel>(OverlayUserQuestion));
 
-            Snackbar.Add("Вопрос успешно сохранён");
+            Snackbar.Add("Ответ успешно сохранён!", Severity.Success);
             Models = await ModelController.GetAll();
             OverlayIsVisible = false;
         }

@@ -69,7 +69,9 @@ public class UserOnboardingController : ControllerBase
     public async Task<ActionResult<UserOnboardingViewModel>> Create(UserOnboardingEditModel userOnboarding)
     {
         var entity = Mapper.Map<UserOnboardingEntity>(userOnboarding);
-        
+        entity.DateTimeStart = DateTime.Now;
+        entity.DateTimeEnd = null;
+
         var roleOnboard = Context.RoleOnboardings
             .Include(x => x.StepPositions)
             .Include(x => x.Position)
@@ -85,7 +87,7 @@ public class UserOnboardingController : ControllerBase
         {
             return NotFound();
         }
-        
+
         Context.UserOnboardings.Add(entity);
         await Context.SaveChangesAsync();
 
@@ -96,11 +98,17 @@ public class UserOnboardingController : ControllerBase
     public async Task<ActionResult<UserOnboardingViewModel>> Update(Guid id, UserOnboardingEditModel userOnboarding)
     {
         var entity = Mapper.Map<UserOnboardingEntity>(userOnboarding);
+        entity.ID = id;
+
+        var exist = Context.UserOnboardings.Count(x => x.ID == id);
+        if (exist == 0)
+        {
+            return NotFound();
+        }
 
         var roleOnboard = Context.RoleOnboardings
             .Include(x => x.StepPositions)
-            .Include(x => x.Position)
-            .Include(x => x.UserSteps).FirstOrDefault(x => x.ID == entity.RoleOnboardingID);
+            .Include(x => x.Position).FirstOrDefault(x => x.ID == entity.RoleOnboardingID);
 
         if (roleOnboard == null)
         {
@@ -113,21 +121,18 @@ public class UserOnboardingController : ControllerBase
             return NotFound();
         }
 
-        entity.ID = id;
+        Context.UserOnboardings.Attach(entity);
+        Context.UserOnboardings.Entry(entity).State = EntityState.Modified;
+        Context.UserOnboardings.Entry(entity).Property(x => x.DateTimeStart).IsModified = false;
+        Context.Entry(entity).Property(x => x.DateTimeEnd).IsModified = false;
+        await Context.SaveChangesAsync();
 
-        Context.Attach(entity);
-        Context.Entry(entity).State = EntityState.Modified;
-        Context.Entry(entity).Property(x => x.DateTimeStart).IsModified = false;
-
-        if (roleOnboard.StepPositions.MaxBy(x=>x.Position)?.Position == currentStep.Position)
+        if (roleOnboard.StepPositions.MaxBy(x => x.Position)?.Position == currentStep.Position)
         {
             entity.DateTimeEnd = DateTime.Now;
+            Context.Entry(entity).Property(x => x.DateTimeEnd).IsModified = true;
         }
-        else
-        {
-            Context.Entry(entity).Property(x => x.DateTimeEnd).IsModified = false;
-        }
-        
+
         await Context.SaveChangesAsync();
 
         return await GetByID(entity.ID);
