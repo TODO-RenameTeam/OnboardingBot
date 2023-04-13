@@ -4,7 +4,7 @@ namespace OnboardingBot.Shared.APIs.Bot;
 
 public interface ITelegramBotInterface
 {
-    [Post("")]
+    [Post("/message/sent")]
     Task SentMessage(SentMessageModel model);
 }
 
