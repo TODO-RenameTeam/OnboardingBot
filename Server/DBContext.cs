@@ -54,7 +54,7 @@ public class DBContext : DbContext
             .HasConversion(splitStringConverter);
 
         modelBuilder.Entity<UserOnboardingEntity>()
-            .HasKey(xx => new { xx.ID, xx.RoleOnboardingID, xx.UserCurrentStepID });
+            .HasKey(xx => new { xx.ID });
 
         modelBuilder.Entity<RoleOnboardingEntity>()
             .HasMany(x => x.Steps)
