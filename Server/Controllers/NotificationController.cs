@@ -53,7 +53,7 @@ public class NotificationController : ControllerBase
         var entity = Mapper.Map<NotificationEntity>(notification);
         entity.Position = null;
 
-        var position = await Context.Positions.FindAsync(notification);
+        var position = await Context.Positions.FindAsync(notification.PositionID);
         if (position != null)
         {
             entity.PositionID = position.ID;

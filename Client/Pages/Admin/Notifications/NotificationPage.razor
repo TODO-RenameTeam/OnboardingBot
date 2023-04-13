@@ -32,7 +32,10 @@
                     <MudTextField Label="Название" @bind-Value="Model.Name" For="() => Model.Name"/>
                     <MudTextField Label="Текст" @bind-Value="Model.Text" For="() => Model.Text"/>
                     <MudNumericField T="int?" Label="Кол-во нужных отправлений" @bind-Value="Model.Count"/>
-                    <MudNumericField T="int?" Label="Кол-во отправлений" @bind-Value="Model.Sending"/>
+                    <MudNumericField T="int?" 
+                                     Label="Кол-во отправлений" 
+                                     @bind-Value="Model.Sending"
+                                     ReadOnly="!IsEdit"/>
                     <MudAutocomplete @bind-Value="@Model.Position"
                                      Label="Должность"
                                      SearchFunc="@SearchPosition"
@@ -59,7 +62,7 @@
 
     public bool IsEdit => ID != null;
 
-    public string PageTitle => IsEdit ? "Изменение сотрудника" : "Создание сотрудника";
+    public string PageTitle => IsEdit ? "Изменение рассылки" : "Создание рассылки";
 
     public NotificationEditModel Model { get; set; } = new();
 
@@ -133,7 +136,7 @@
 
             Model = Mapper.Map<NotificationEditModel>(result);
             NavigationManager.NavigateTo($"/admin/notifications/{result.ID}/edit");
-            Snackbar.Add("Сотрудник успешно сохранён!");
+            Snackbar.Add("Рассылка успешно сохранён!");
         }
         catch (ValidationApiException validationException)
         {

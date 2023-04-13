@@ -10,11 +10,11 @@ public class NotificationEditModel
 
     [Required] public string Text { get; set; }
 
-    [DefaultValue(0)] public int Minutes { get; set; }
+    [DefaultValue(0)] public int Minutes { get; set; } = 0;
 
-    [DefaultValue(0)] public int? Count { get; set; }
+    [DefaultValue(0)] public int? Count { get; set; } = 0;
 
-    [DefaultValue(0)] public int? Sending { get; set; }
+    [DefaultValue(0)] public int? Sending { get; set; } = 0;
 
     public Guid? PositionID { get; set; }
     public PositionViewModel? Position { get; set; }
