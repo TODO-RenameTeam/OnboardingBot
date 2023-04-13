@@ -97,7 +97,7 @@ public class UserController : ControllerBase
 
         await TelegramBotInterface.SentMessage(new()
         {
-            userId = (long)entity.TelegramID,
+            userId = entity.TelegramID.Value,
             text = text
         });
 
