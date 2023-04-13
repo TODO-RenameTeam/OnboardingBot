@@ -6,6 +6,7 @@ services:
       dockerfile: Server/Dockerfile
     restart: 'on-failure'
     environment:
+      - BOT_URL
       - ASPNETCORE_ENVIRONMENT
     #      - DB_CONNECTION_STRING
     networks:

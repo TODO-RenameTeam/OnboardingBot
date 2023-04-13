@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OnboardingBot.Server.Entities;
+using OnboardingBot.Shared.APIs.Bot;
 using OnboardingBot.Shared.EditModels;
 using OnboardingBot.Shared.ViewModels;
 
@@ -13,11 +14,13 @@ public class UserQuestionController : ControllerBase
 {
     private DBContext Context;
     private IMapper Mapper;
+    private ITelegramBotInterface TelegramBotInterface;
 
-    public UserQuestionController(DBContext context, IMapper mapper)
+    public UserQuestionController(DBContext context, IMapper mapper, ITelegramBotInterface telegramBotInterface)
     {
         Context = context;
         Mapper = mapper;
+        TelegramBotInterface = telegramBotInterface;
     }
 
     [HttpGet]
@@ -92,8 +95,16 @@ public class UserQuestionController : ControllerBase
             Context.Entry(entity).Property(x => x.DateTimeQuestion).IsModified = false;
         }
 
-        // todo SEND MESSAGE TO TG BOT
-        
+        var user = await Context.Users.FindAsync(entity.UserQuestionID);
+        if (user.TelegramID != null)
+        {
+            await TelegramBotInterface.SentMessage(new SentMessageModel()
+            {
+                text = $"Ответ на вопрос: {entity.Question}\nОтвет: {entity.Answer}", 
+                userId = (long)user.TelegramID
+            });
+        }
+
         await Context.SaveChangesAsync();
 
         return await GetByID(entity.ID);

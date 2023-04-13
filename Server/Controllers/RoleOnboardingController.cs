@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OnboardingBot.Server.Entities;
+using OnboardingBot.Shared.APIs.Bot;
 using OnboardingBot.Shared.EditModels;
 using OnboardingBot.Shared.ViewModels;
 
