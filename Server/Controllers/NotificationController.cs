@@ -137,7 +137,7 @@ public class NotificationController : ControllerBase
                         await TelegramBotInterface.SentMessage(new()
                         {
                             text = entity.Text,
-                            userId = (long)user.TelegramID
+                            userId = user.TelegramID.Value
                         });
                     }
                 }
