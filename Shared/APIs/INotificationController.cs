@@ -16,7 +16,7 @@ public interface INotificationController
     Task<NotificationViewModel> Create(NotificationEditModel notification);
    
     [Post("/api/notification/start")]
-    Task<NotificationViewModel> Start(Guid id);
+    Task Start(Guid id);
     
     [Put("/api/notification")]
     Task<NotificationViewModel> Update(Guid id, NotificationEditModel notification);

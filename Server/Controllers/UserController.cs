@@ -16,10 +16,11 @@ public class UserController : ControllerBase
     private IMapper Mapper;
     private ITelegramBotInterface TelegramBotInterface;
 
-    public UserController(DBContext context, IMapper mapper)
+    public UserController(DBContext context, IMapper mapper, ITelegramBotInterface telegramBotInterface)
     {
         Context = context;
         Mapper = mapper;
+        TelegramBotInterface = telegramBotInterface;
     }
 
     [HttpGet]
@@ -90,14 +91,14 @@ public class UserController : ControllerBase
             return NotFound();
         }
 
-        if (entity.TelegramID == null)
+        if (entity.TelegramID.GetValueOrDefault(0) == 0)
         {
             return NotFound();
         }
-
+        
         await TelegramBotInterface.SentMessage(new()
         {
-            userId = entity.TelegramID.Value,
+            userId = entity.TelegramID.GetValueOrDefault(0),
             text = text
         });
 

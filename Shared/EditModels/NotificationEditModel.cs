@@ -12,7 +12,7 @@ public class NotificationEditModel
 
     [DefaultValue(0)] public int Minutes { get; set; } = 0;
 
-    [DefaultValue(0)] public int? Count { get; set; } = 0;
+    [DefaultValue(1)] public int? Count { get; set; } = 1;
 
     [DefaultValue(0)] public int? Sending { get; set; } = 0;
 

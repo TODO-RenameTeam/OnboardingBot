@@ -97,8 +97,6 @@ public class NotificationController : ControllerBase
         entity.Sending = 0;
         await Context.SaveChangesAsync();
 
-        await Start(entity);
-
         if (entity == null)
         {
             return NotFound();
@@ -126,18 +124,19 @@ public class NotificationController : ControllerBase
     {
         if (entity.DateTimeStart != null && entity.Count != entity.Sending)
         {
-            var res = entity.DateTimeStart.Value.AddMinutes(entity.Minutes).TimeOfDay;
+            var res = entity.DateTimeStart.Value.AddMinutes(entity.Minutes * (entity.Sending.GetValueOrDefault(1) == 0 ? 1 : entity.Sending.GetValueOrDefault(1)))
+                .TimeOfDay;
             var time = DateTime.Now.TimeOfDay;
             if (res.Hours == time.Hours && res.Minutes == time.Minutes)
             {
                 foreach (var user in entity.Position.Users)
                 {
-                    if (user.TelegramID != null)
+                    if (user.TelegramID.GetValueOrDefault(0) != 0)
                     {
                         await TelegramBotInterface.SentMessage(new()
                         {
                             text = entity.Text,
-                            userId = user.TelegramID.Value
+                            userId = user.TelegramID.GetValueOrDefault()
                         });
                     }
                 }

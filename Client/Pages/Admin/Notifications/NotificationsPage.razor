@@ -32,13 +32,13 @@
 </MudGrid>
 
 <MudPaper>
-    <MudTable Items="@Models">
+    <MudTable Items="@Models" Dense="true">
         <HeaderContent>
             <MudTh>
                 <MudTableSortLabel SortBy="new Func<NotificationViewModel, object>(x => x.Name)">Название</MudTableSortLabel>
             </MudTh>
             <MudTh>
-                <MudTableSortLabel SortBy="new Func<NotificationViewModel, object>(x => x.Count)">Кол-во отправлений</MudTableSortLabel>
+                <MudTableSortLabel SortBy="new Func<NotificationViewModel, object>(x => x.Count)">Кол-во нужных отправлений</MudTableSortLabel>
             </MudTh>
             <MudTh>
                 <MudTableSortLabel SortBy="new Func<NotificationViewModel, object>(x => x.Minutes)">Кол-во минут</MudTableSortLabel>
@@ -50,6 +50,9 @@
                 <MudTableSortLabel SortBy="new Func<NotificationViewModel, object>(x => x.Position)">Должность</MudTableSortLabel>
             </MudTh>
             <MudTh>
+                Статус
+            </MudTh>
+            <MudTh>
                 Действия
             </MudTh>
         </HeaderContent>
@@ -58,13 +61,13 @@
                 @context.Name
             </MudTd>
             <MudTd>
-                @context.Count?
+                @context.Count
             </MudTd>
             <MudTd>
-                @context.Minutes?
+                @context.Minutes
             </MudTd>
             <MudTd>
-                @context.Sending?
+                @context.Sending
             </MudTd>
             <MudTd>
                 @if (context.Position == null)
@@ -74,6 +77,23 @@
                 else
                 {
                     @context.Position.Name
+                }
+            </MudTd>
+            <MudTd>
+                @if (context.DateTimeStart == null)
+                {
+                    <MudChip Color="Color.Error" Icon="@Icons.Material.Filled.Close" Size="Size.Small">Рассылки не было</MudChip>
+                }
+                else
+                {
+                    @if (context.Count == context.Sending)
+                    {
+                        <MudChip Color="Color.Success" Icon="@Icons.Material.Filled.Announcement" Size="Size.Small">Отправлено</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip Color="Color.Warning" Icon="@Icons.Material.Filled.Details" Size="Size.Small">В работе</MudChip>
+                    }
                 }
             </MudTd>
             <MudTd>
@@ -102,11 +122,6 @@
 
     [Inject]
     private ISnackbar Snackbar { get; set; }
-
-
-    private bool OverlayIsVisible { get; set; } = false;
-    public NotificationViewModel? OverlayNotification { get; set; } = null!;
-    public TelegramCodeViewModel? OverlayTelegramCode { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -148,9 +163,7 @@
         try
         {
             await ModelController.Start(model.ID);
-
             Snackbar.Add("Рассылка начата успешно!", Severity.Success);
-
             Models = await ModelController.GetAll();
         }
         catch (Exception e)
