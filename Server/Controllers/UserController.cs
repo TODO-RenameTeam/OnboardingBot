@@ -95,6 +95,12 @@ public class UserController : ControllerBase
             return NotFound();
         }
 
+        await TelegramBotInterface.SentMessage(new()
+        {
+            userId = (long)entity.TelegramID,
+            text = text
+        });
+
         return Ok();
     }
 
