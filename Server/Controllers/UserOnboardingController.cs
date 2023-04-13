@@ -48,7 +48,7 @@ public class UserOnboardingController : ControllerBase
 
         return Mapper.Map<UserOnboardingViewModel>(userOnboarding);
     }
-    
+
     [HttpGet("user/id/{userId}")]
     public async Task<ActionResult<List<UserOnboardingViewModel>>> GetByUserID(Guid userId)
     {
@@ -62,14 +62,30 @@ public class UserOnboardingController : ControllerBase
             return NotFound();
         }
 
-        return userOnboarding.Select(x=> Mapper.Map<UserOnboardingViewModel>(x)).ToList();
+        return userOnboarding.Select(x => Mapper.Map<UserOnboardingViewModel>(x)).ToList();
     }
 
     [HttpPost]
     public async Task<ActionResult<UserOnboardingViewModel>> Create(UserOnboardingEditModel userOnboarding)
     {
         var entity = Mapper.Map<UserOnboardingEntity>(userOnboarding);
+        
+        var roleOnboard = Context.RoleOnboardings
+            .Include(x => x.StepPositions)
+            .Include(x => x.Position)
+            .Include(x => x.UserSteps).FirstOrDefault(x => x.ID == entity.RoleOnboardingID);
 
+        if (roleOnboard == null)
+        {
+            return NotFound();
+        }
+
+        var currentStep = roleOnboard.StepPositions.FirstOrDefault(x => x.StepID == userOnboarding.UserCurrentStepID);
+        if (currentStep == null)
+        {
+            return NotFound();
+        }
+        
         Context.UserOnboardings.Add(entity);
         await Context.SaveChangesAsync();
 
@@ -77,15 +93,41 @@ public class UserOnboardingController : ControllerBase
     }
 
     [HttpPut]
-    public async Task<ActionResult<UserOnboardingViewModel>> Update(Guid id, UserOnboardingEntity userOnboarding)
+    public async Task<ActionResult<UserOnboardingViewModel>> Update(Guid id, UserOnboardingEditModel userOnboarding)
     {
         var entity = Mapper.Map<UserOnboardingEntity>(userOnboarding);
+
+        var roleOnboard = Context.RoleOnboardings
+            .Include(x => x.StepPositions)
+            .Include(x => x.Position)
+            .Include(x => x.UserSteps).FirstOrDefault(x => x.ID == entity.RoleOnboardingID);
+
+        if (roleOnboard == null)
+        {
+            return NotFound();
+        }
+
+        var currentStep = roleOnboard.StepPositions.FirstOrDefault(x => x.StepID == userOnboarding.UserCurrentStepID);
+        if (currentStep == null)
+        {
+            return NotFound();
+        }
 
         entity.ID = id;
 
         Context.Attach(entity);
         Context.Entry(entity).State = EntityState.Modified;
+        Context.Entry(entity).Property(x => x.DateTimeStart).IsModified = false;
 
+        if (roleOnboard.StepPositions.MaxBy(x=>x.Position)?.Position == currentStep.Position)
+        {
+            entity.DateTimeEnd = DateTime.Now;
+        }
+        else
+        {
+            Context.Entry(entity).Property(x => x.DateTimeEnd).IsModified = false;
+        }
+        
         await Context.SaveChangesAsync();
 
         return await GetByID(entity.ID);
