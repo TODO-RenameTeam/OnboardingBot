@@ -19,19 +19,20 @@
     <MudItem>
         <MudFab DisableElevation="true"
                 StartIcon="@Icons.Material.Filled.ArrowBack"
-                Text="Назад" Href="/admin/positions"/>
+                Text="Назад" Href="/admin/onboardings"/>
     </MudItem>
     <MudItem>
         <MudText Typo="Typo.h3">@PageTitle</MudText>
     </MudItem>
     <MudItem xs="12">
-        <MudStepper @ref="_stepper"
-                    PreventStepChangeAsync="new Func<StepChangeDirection, Task<bool>>(CheckChange)" LocalizedStrings="GetLocalizedStrings()">
+        <MudStepper @ref="_stepper" PreventStepChange="new Func<StepChangeDirection, bool>(CheckChange)"
+
+                    LocalizedStrings="GetLocalizedStrings()">
             <ChildContent>
-                <MudStep Title="Общая информация" StatusChanged="StatusChanged">
+                <MudStep Title="Общая информация">
                     <MudForm @ref="_form">
                         <MudStack>
-                            <MudAutocomplete @bind-Value="@SelectedPosition"
+                            <MudAutocomplete @bind-Value="@Model.Position"
                                              Required="true"
                                              Label="Должность"
                                              SearchFunc="@SearchPosition"
@@ -64,10 +65,18 @@
                                 DisableElevation="true"
                                 OnClick="CreateStep"/>
                     </MudStack>
-                    <MudTable Items="@Model.StepPositions" Dense="true">
+                    <MudTable Items="@Model.StepPositions" Dense="true"
+                              RowEditPreview="BackupItem"
+                              RowEditCancel="ResetItemToOriginalValues"
+                              CanCancelEdit="true">
                         <ToolBarContent>
                             <MudText Typo="Typo.h6">Шаги</MudText>
                             <MudSpacer/>
+                            <MudFab StartIcon="@Icons.Material.Filled.Add"
+                                    Size="Size.Small" Text="Сортировать шаги"
+                                    Label="Сортировать шаги"
+                                    DisableElevation="true"
+                                    OnClick="SortSteps"/>
                         </ToolBarContent>
                         <HeaderContent>
                             <MudTh>
@@ -92,6 +101,17 @@
                                         DisableElevation="true"/>
                             </MudTd>
                         </RowTemplate>
+                        <RowEditingTemplate Context="step">
+                            <MudTd DataLabel="Позиция">
+                                <MudNumericField T="int"
+                                                 @bind-Value="@step.Position"
+                                                 For="() => step.Position"
+                                                 Label="Позиция"/>
+                            </MudTd>
+                            <MudTd DataLabel="Название">
+                                @step.Step.Name
+                            </MudTd>
+                        </RowEditingTemplate>
                     </MudTable>
                 </MudStep>
                 <MudStep Title="Проверка" StatusChanged="FinishStatusChanged">
@@ -172,7 +192,7 @@
             if (IsEdit)
             {
                 Model = Mapper.Map<RoleOnboardingEditModel>(await ModelController.GetByID(ID.GetValueOrDefault()));
-                SelectedPosition = Positions.FirstOrDefault(x => x.ID == Model.PositionID);
+                Model.Position = Positions.FirstOrDefault(x => x.ID == Model.PositionID);
             }
         }
         catch (ApiException e)
@@ -187,39 +207,39 @@
     /// </summary>
     /// <param name="direction"></param>
     /// <returns></returns>
-    private async Task<bool> CheckChange(StepChangeDirection direction)
+    private bool CheckChange(StepChangeDirection direction)
     {
         if (direction == StepChangeDirection.Backward)
         {
             return false;
         }
+        Console.WriteLine(_stepper.GetActiveIndex());
         if (_stepper.GetActiveIndex() == 0)
         {
-            await _form.Validate();
-            StateHasChanged();
-            return !_form.IsValid;
+            if (Model.Position == null)
+            {
+                Snackbar.Add("Укажите должность!", Severity.Error);
+                return true;
+            }
+            return false;
         }
         else if (_stepper.GetActiveIndex() == 1)
         {
-            await _form2.Validate();
-            StateHasChanged();
-            return !_form2.IsValid;
+            if (Model.StepPositions.Count == 0)
+            {
+                Snackbar.Add("Добавьте хотя-бы один шаг!", Severity.Error);
+                return true;
+            }
+            return false;
         }
         else if (_stepper.GetActiveIndex() == 2)
         {
-            await _form2.Validate();
-            StateHasChanged();
-            return !_form2.IsValid;
+            return false;
         }
         else
         {
             return false;
         }
-    }
-
-    private void StatusChanged(StepStatus status)
-    {
-        Snackbar.Add($"First step {status.ToDescriptionString()}.", Severity.Info);
     }
 
     private StepperLocalizedStrings GetLocalizedStrings()
@@ -232,7 +252,7 @@
             Optional = "Не обязательно",
             Previous = "Предыдущий",
             Skip = "Пропустить",
-            Skipped = "Пропущено"
+            Skipped = "Пропущено",
         };
     }
 
@@ -280,7 +300,10 @@
 
     private async Task OnValidSumbit()
     {
-        Model.PositionID = SelectedPosition?.ID ?? Guid.Empty;
+        if (Model.Position != null)
+        {
+            Model.PositionID = Model.Position.ID;
+        }
         try
         {
             var result = IsEdit
@@ -330,6 +353,32 @@
         {
             OnValidSumbit();
         }
+    }
+
+    public RoleOnboardingStepViewModel RoleOnboardingBeforeEdit { get; set; }
+
+    private void BackupItem(object element)
+    {
+        RoleOnboardingBeforeEdit = new()
+        {
+            Position = ((RoleOnboardingStepViewModel)element).Position,
+            StepID = ((RoleOnboardingStepViewModel)element).StepID,
+            Step = ((RoleOnboardingStepViewModel)element).Step,
+            RoleOnboarding = ((RoleOnboardingStepViewModel)element).RoleOnboarding,
+        };
+    }
+
+    private void ResetItemToOriginalValues(object element)
+    {
+        ((RoleOnboardingStepViewModel)element).Position = RoleOnboardingBeforeEdit.Position;
+        ((RoleOnboardingStepViewModel)element).StepID = RoleOnboardingBeforeEdit.StepID;
+        ((RoleOnboardingStepViewModel)element).Step = RoleOnboardingBeforeEdit.Step;
+        ((RoleOnboardingStepViewModel)element).RoleOnboarding = RoleOnboardingBeforeEdit.RoleOnboarding;
+    }
+
+    private void SortSteps()
+    {
+        Model.StepPositions = Model.StepPositions.OrderBy(x => x.Position).ToHashSet();
     }
 
 }
