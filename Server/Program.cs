@@ -16,7 +16,7 @@ StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configurat
 
 // Intialize DB Context.
 builder.Services.AddDbContext<DBContext>(options =>
-    options.UseNpgsql("Host=srv2.kaboom.pro;Database=onboardingbot;Username=onboardingbot;Password=onboardingbot"));
+    options.UseNpgsql(Environment.GetEnvironmentVariable("DB_CONNECTION_STRING")));
 
 // Add services to the container.
 
@@ -55,7 +55,7 @@ serializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues:
 
 var serializer = new SystemTextJsonContentSerializer(serializerOptions);
 
-var botUrlStr = "https://botonb.kaboom.pro";
+var botUrlStr = Environment.GetEnvironmentVariable("BOT_URL");
 if (string.IsNullOrWhiteSpace(botUrlStr))
 {
     Console.WriteLine("ERROR! LINK TO BOT NOT SETTED!");
