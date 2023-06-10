@@ -31,7 +31,7 @@ public class PositionController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<PositionViewModel>> GetByID(Guid id)
     {
-        var position = Context.Positions.Include(x => x.MainUser)
+        var position = Context.Positions
             .FirstOrDefault(x => x.ID == id);
 
         if (position == null)

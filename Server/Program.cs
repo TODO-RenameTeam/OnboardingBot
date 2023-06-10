@@ -4,8 +4,10 @@ using Microsoft.AspNetCore.Hosting.StaticWebAssets;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using OnboardingBot.Server;
+using OnboardingBot.Server.Jobs;
 using OnboardingBot.Server.Services;
 using OnboardingBot.Shared.APIs.Bot;
+using Quartz.Impl;
 using Refit;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,7 +16,7 @@ StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configurat
 
 // Intialize DB Context.
 builder.Services.AddDbContext<DBContext>(options =>
-    options.UseNpgsql("Host=srv2.kaboom.pro;Database=onboardingbot;Username=onboardingbot;Password=onboardingbot"));
+    options.UseNpgsql(Environment.GetEnvironmentVariable("DB_CONNECTION_STRING")));
 
 // Add services to the container.
 
@@ -22,6 +24,10 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
 builder.Services.AddTransient<CodeService>();
+builder.Services.AddTransient<NotificationService>();
+
+builder.Services.AddTransient<NotificationSender>();
+builder.Services.AddTransient<JobFactory>(o => new JobFactory(builder.Services.BuildServiceProvider()));
 
 if (builder.Environment.IsDevelopment())
 {
@@ -95,7 +101,8 @@ app.MapRazorPages();
 app.MapControllers();
 app.MapFallbackToFile("index.html");
 
-var db = app.Services.CreateScope().ServiceProvider.GetService<DBContext>();
-await db.Database.EnsureCreatedAsync();
+var scope = app.Services.CreateScope().ServiceProvider;
+await scope.GetService<DBContext>().Database.EnsureCreatedAsync();
+await scope.GetService<NotificationService>().Start();
 
 app.Run();

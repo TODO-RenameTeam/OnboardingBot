@@ -1,0 +1,110 @@
+@page "/admin/users/{ID:guid}/sent"
+
+@using Refit
+@using OnboardingBot.Shared.APIs
+@using OnboardingBot.Shared.ViewModels
+@using ButtonType = MudBlazor.ButtonType
+
+@layout AdminLayout
+
+<PageTitle>@PageTitle</PageTitle>
+
+<MudGrid>
+    <MudItem>
+        <MudFab DisableElevation="true"
+                StartIcon="@Icons.Material.Filled.ArrowBack"
+                Text="Назад" Href="/admin/users"/>
+    </MudItem>
+    <MudItem>
+        <MudText Typo="Typo.h3">@PageTitle</MudText>
+    </MudItem>
+    <MudItem xs="12">
+        <MudText Typo="Typo.h5">Сотрудник: @Model.FullName</MudText>
+    </MudItem>
+    <MudItem xs="12">
+        <EditForm Model="@Model" OnValidSubmit="OnValidSumbit">
+            <DataAnnotationsValidator/>
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField Label="Текст отправки"
+                                  @bind-Value="Text"
+                                  Required="true"/>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudFab ButtonType="ButtonType.Submit"
+                            Variant="Variant.Filled"
+                            DisableElevation="true"
+                            StartIcon="@Icons.Material.Filled.Send"
+                            Text="Отправить"
+                            Color="Color.Primary"/>
+                </MudCardActions>
+            </MudCard>
+        </EditForm>
+    </MudItem>
+</MudGrid>
+
+@code
+{
+    [Parameter]
+    public Guid ID { get; set; }
+
+    public string PageTitle = "Отправка сообщения сотруднику";
+
+    public UserViewModel Model { get; set; } = new();
+
+    public string Text { get; set; } = string.Empty;
+
+    [Inject]
+    public IUserController ModelController { get; set; }
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDates();
+    }
+
+    private async Task LoadDates()
+    {
+        try
+        {
+            Model = await ModelController.GetByID(ID);
+            if (Model.TelegramID == null)
+            {
+                Snackbar.Add("У сотрудника нет привязки к ТГ!\nВозвращаем назад...");
+                NavigationManager.NavigateTo("/admin/users");
+            }
+        }
+        catch (ApiException e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+
+    private async Task OnValidSumbit()
+    {
+        if (string.IsNullOrWhiteSpace(Text))
+        {
+            Snackbar.Add("Укажите текст отправления!", Severity.Error);
+            return;
+        }
+        try
+        {
+            await ModelController.SentMessage(ID, Text);
+
+            Snackbar.Add("Сообщение успешно отправлено!");
+        }
+        catch (ValidationApiException validationException)
+        {
+            Snackbar.Add(validationException.Content.Detail, Severity.Error);
+        }
+        catch (ApiException exception)
+        {
+            Snackbar.Add(exception.Content, Severity.Error);
+        }
+    }
+}

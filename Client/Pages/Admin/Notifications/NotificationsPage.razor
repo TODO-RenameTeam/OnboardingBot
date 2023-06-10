@@ -1,0 +1,174 @@
+@page "/admin/notifications"
+@using OnboardingBot.Shared.ViewModels
+@using Refit
+@using OnboardingBot.Shared.APIs
+@using OnboardingBot.Shared.Extensions
+@using System.ComponentModel.DataAnnotations
+@using OnboardingBot.Shared.Models
+
+@layout AdminLayout
+
+<PageTitle>Сотрудники</PageTitle>
+
+<MudGrid>
+    <MudItem>
+        <MudFab DisableElevation="true"
+                StartIcon="@Icons.Material.Filled.ArrowBack"
+                Size="Size.Small"
+                Text="Домой" Href="/admin" Label="Домой"/>
+    </MudItem>
+    <MudItem>
+        <MudText Typo="Typo.h3" GutterBottom="true">Рассылки</MudText>
+    </MudItem>
+    <MudItem>
+        <MudFab StartIcon="@Icons.Material.Filled.Add"
+                Size="Size.Small"
+                Color="Color.Success"
+                Label="Добавить"
+                Text="Добавить"
+                DisableElevation="true"
+                Href="/admin/notifications/create"/>
+    </MudItem>
+</MudGrid>
+
+<MudPaper>
+    <MudTable Items="@Models" Dense="true">
+        <HeaderContent>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<NotificationViewModel, object>(x => x.Name)">Название</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<NotificationViewModel, object>(x => x.Count)">Кол-во нужных отправлений</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<NotificationViewModel, object>(x => x.Minutes)">Кол-во минут</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<NotificationViewModel, object>(x => x.Sending)">Отправлено</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel SortBy="new Func<NotificationViewModel, object>(x => x.Position)">Должность</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                Статус
+            </MudTh>
+            <MudTh>
+                Действия
+            </MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd>
+                @context.Name
+            </MudTd>
+            <MudTd>
+                @context.Count
+            </MudTd>
+            <MudTd>
+                @context.Minutes
+            </MudTd>
+            <MudTd>
+                @context.Sending
+            </MudTd>
+            <MudTd>
+                @if (context.Position == null)
+                {
+                    <MudChip Color="Color.Warning" Size="Size.Small">Должность не указана</MudChip>
+                }
+                else
+                {
+                    @context.Position.Name
+                }
+            </MudTd>
+            <MudTd>
+                @if (context.DateTimeStart == null)
+                {
+                    <MudChip Color="Color.Error" Icon="@Icons.Material.Filled.Close" Size="Size.Small">Рассылки не было</MudChip>
+                }
+                else
+                {
+                    @if (context.Count == context.Sending)
+                    {
+                        <MudChip Color="Color.Success" Icon="@Icons.Material.Filled.Announcement" Size="Size.Small">Отправлено</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip Color="Color.Warning" Icon="@Icons.Material.Filled.Details" Size="Size.Small">В работе</MudChip>
+                    }
+                }
+            </MudTd>
+            <MudTd>
+                <MudButton Size="Size.Small" Color="Color.Warning" Href="@($"/admin/notifications/{context.ID}/edit")">Изменить</MudButton>
+                <MudButton Size="Size.Small" Color="Color.Success" OnClick="(() => OnStart(context))">
+                    @(context.DateTimeStart == null ? "Начать рассылку" : "Начать рассылку заного")
+                </MudButton>
+                <MudButton Size="Size.Small" Color="Color.Error" OnClick="(() => OnDeleteModel(context))">Удалить</MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code
+{
+    private List<NotificationViewModel> Models { get; set; } = new();
+
+    [Inject]
+    private INotificationController ModelController { get; set; }
+
+    [Inject]
+    private ITelegramCodeController TelegramCodeController { get; set; }
+
+    [Inject]
+    private IDialogService DialogService { get; set; }
+
+    [Inject]
+    private ISnackbar Snackbar { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Models = await ModelController.GetAll();
+        }
+        catch (ApiException e)
+        {
+            Console.WriteLine(e);
+    // throw;
+        }
+    }
+
+    private async Task OnDeleteModel(NotificationViewModel model)
+    {
+        var result = await DialogService.ShowMessageBox("Подтверждение",
+            $"Вы точно хотите удалить {model.Name}?", "Да", "Нет");
+
+        if (!result.GetValueOrDefault(false))
+        {
+            return;
+        }
+
+        try
+        {
+            await ModelController.Delete(model.ID);
+            Models = await ModelController.GetAll();
+            Snackbar.Add("Рассылка успешно удалена!", Severity.Success);
+        }
+        catch (ValidationApiException validationException)
+        {
+            Snackbar.Add(validationException.Content.Detail, Severity.Error);
+        }
+    }
+
+    private async Task OnStart(NotificationViewModel model)
+    {
+        try
+        {
+            await ModelController.Start(model.ID);
+            Snackbar.Add("Рассылка начата успешно!", Severity.Success);
+            Models = await ModelController.GetAll();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+        }
+    }
+}

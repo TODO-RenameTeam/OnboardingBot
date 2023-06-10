@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OnboardingBot.Server.Entities;
+using OnboardingBot.Shared.APIs.Bot;
 using OnboardingBot.Shared.EditModels;
 using OnboardingBot.Shared.ViewModels;
 
@@ -13,18 +14,20 @@ public class UserController : ControllerBase
 {
     private DBContext Context;
     private IMapper Mapper;
+    private ITelegramBotInterface TelegramBotInterface;
 
-    public UserController(DBContext context, IMapper mapper)
+    public UserController(DBContext context, IMapper mapper, ITelegramBotInterface telegramBotInterface)
     {
         Context = context;
         Mapper = mapper;
+        TelegramBotInterface = telegramBotInterface;
     }
 
     [HttpGet]
     public async Task<ActionResult<List<UserViewModel>>> GetAll()
     {
         var res = Context.Users
-            .Include(x=>x.Position)
+            .Include(x => x.Position)
             .ToList();
 
         return res.Select(x => Mapper.Map<UserViewModel>(x)).ToList();
@@ -34,7 +37,7 @@ public class UserController : ControllerBase
     public async Task<ActionResult<UserViewModel>> GetByID(Guid id)
     {
         var user = Context.Users
-            .Include(x=>x.Position)
+            .Include(x => x.Position)
             .FirstOrDefault(x => x.ID == id);
         if (user == null)
         {
@@ -49,7 +52,7 @@ public class UserController : ControllerBase
     public async Task<ActionResult<UserViewModel>> GetByTelegramID(long id)
     {
         var user = Context.Users
-            .Include(x=>x.Position)
+            .Include(x => x.Position)
             .FirstOrDefault(x => x.TelegramID == id);
         if (user == null)
         {
@@ -64,7 +67,7 @@ public class UserController : ControllerBase
     {
         var entity = Mapper.Map<UserEntity>(user);
         entity.Position = null;
-        
+
         var position = await Context.Positions.FindAsync(user.PositionID);
         if (position != null)
         {
@@ -79,6 +82,29 @@ public class UserController : ControllerBase
         return await GetByID(entity.ID);
     }
 
+    [HttpPost("message")]
+    public async Task<ActionResult> SentMessage(Guid id, string text)
+    {
+        var entity = await Context.Users.FindAsync(id);
+        if (entity == null)
+        {
+            return NotFound();
+        }
+
+        if (entity.TelegramID.GetValueOrDefault(0) == 0)
+        {
+            return NotFound();
+        }
+        
+        await TelegramBotInterface.SentMessage(new()
+        {
+            userId = entity.TelegramID.GetValueOrDefault(0),
+            text = text
+        });
+
+        return Ok();
+    }
+
     [HttpPut]
     public async Task<ActionResult<UserViewModel>> Update(Guid id, UserEntity user)
     {
@@ -89,7 +115,7 @@ public class UserController : ControllerBase
         Context.Attach(entity);
         Context.Entry(entity).State = EntityState.Modified;
         Context.Entry(entity).Property(x => x.TelegramID).IsModified = false;
-        
+
         var position = await Context.Positions.FindAsync(user.PositionID);
         if (position != null)
         {

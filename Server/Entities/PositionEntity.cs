@@ -24,11 +24,6 @@ public class PositionEntity
     /// Описание.
     /// </summary>
     public string? Description { get; set; }
-
-    /// <summary>
-    /// ID ответственного сотрудника.
-    /// </summary>
-    public Guid? MainUserID { get; set; }
-
-    [ForeignKey(nameof(MainUserID))] public UserEntity? MainUser { get; set; }
+    
+    public HashSet<UserEntity>? Users { get; set; } = new();
 }

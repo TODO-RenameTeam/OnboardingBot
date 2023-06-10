@@ -17,6 +17,10 @@ public class Mappings : Profile
         CreateMap<ButtonViewModel, ButtonEntity>().ReverseMap();
         CreateMap<ButtonEditModel, ButtonEntity>().ReverseMap();
 
+        CreateMap<NotificationViewModel, NotificationEditModel>().ReverseMap();
+        CreateMap<NotificationViewModel, NotificationEntity>().ReverseMap();
+        CreateMap<NotificationEditModel, NotificationEntity>().ReverseMap();
+        
         CreateMap<PositionViewModel, PositionEditModel>().ReverseMap();
         CreateMap<PositionViewModel, PositionEntity>().ReverseMap();
         CreateMap<PositionEditModel, PositionEntity>().ReverseMap();

@@ -24,6 +24,8 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <AdditionalFiles Include="Pages\Admin\Notifications\NotificationPage.razor" />
+	  <AdditionalFiles Include="Pages\Admin\Notifications\NotificationsPage.razor" />
 	  <AdditionalFiles Include="Pages\Admin\Positions\PositionsPage.razor" />
 	</ItemGroup>
 
